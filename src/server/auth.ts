@@ -7,13 +7,15 @@ import {
 import { type Adapter } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
 
-// import { env } from "~/env";
+import { env } from "~/env";
 import { db } from "~/server/db";
 import { z } from "zod";
 import { createTable } from "~/server/db/schema";
 
 import { users } from "./db/schema";
 import { nanoid } from "nanoid";
+import ldap from "ldapjs";
+import fs from "fs";
 
 const SignInSchema = z.object({
   email: z.string().email(),
@@ -40,7 +42,6 @@ declare module "next-auth" {
   //   // role: UserRole;
   // }
 }
-
 
 /**
  * Options for NextAuth.js used to configure adapters, providers, callbacks, etc.
@@ -83,7 +84,35 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         try {
-          const { email } = await SignInSchema.parseAsync(credentials);
+          const { email, password } =
+            await SignInSchema.parseAsync(credentials);
+
+          const certificate = await fs.promises.readFile(
+            env.LDAP_CERTIFICATE_PATH,
+          );
+          const ldapClient = ldap
+            .createClient({
+              url: env.LDAP_URL,
+              tlsOptions: {
+                ca: [certificate],
+              },
+            })
+            .on("error", () => {
+              throw Error(
+                "INTERNAL SERVER ERROR: LDAP client connection failed",
+              );
+            });
+
+          await new Promise((resolve, reject) => {
+            ldapClient.bind(email, password, (error) => {
+              if (!!error) {
+                // console.error(error);
+                reject(new Error("Bad Request: Invalid credentials"));
+              } else {
+                resolve(console.log("LDAP bind successful"));
+              }
+            });
+          });
 
           const user = await db.query.users.findFirst({
             where: (users, { eq }) => eq(users.email, email),
@@ -104,8 +133,7 @@ export const authOptions: NextAuthOptions = {
           return user;
         } catch (error) {
           if (error instanceof z.ZodError) {
-            console.error(error.errors);
-            return null;
+            throw Error("Bad Request: Invalid credentials");
           }
         }
         return null;
