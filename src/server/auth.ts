@@ -1,19 +1,14 @@
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import {
   getServerSession,
   type DefaultSession,
   type NextAuthOptions,
 } from "next-auth";
-import { type Adapter } from "next-auth/adapters";
 import Credentials from "next-auth/providers/credentials";
 
 import { env } from "~/env";
-import { db } from "~/server/db";
 import { z } from "zod";
-import { createTable } from "~/server/db/schema";
-
-import { users } from "./db/schema";
 import { nanoid } from "nanoid";
+
 import ldap from "ldapjs";
 import fs from "fs";
 
@@ -50,24 +45,14 @@ declare module "next-auth" {
  */
 export const authOptions: NextAuthOptions = {
   callbacks: {
-    jwt: ({ token, user }) => {
-      if (user) {
-        token.id = user.id;
-      }
-      return token;
-    },
     session: ({ session, token }) => ({
       ...session,
       user: {
         ...session.user,
-        id: token.id,
+        id: token.sub,
       },
     }),
   },
-  session: {
-    strategy: "jwt",
-  },
-  adapter: DrizzleAdapter(db, createTable) as Adapter,
   providers: [
     Credentials({
       credentials: {
@@ -114,21 +99,11 @@ export const authOptions: NextAuthOptions = {
             });
           });
 
-          const user = await db.query.users.findFirst({
-            where: (users, { eq }) => eq(users.email, email),
-          });
-
-          if (!user) {
-            const id = nanoid();
-            const newUser = {
-              id,
-              email,
-            };
-
-            await db.insert(users).values(newUser);
-
-            return newUser;
-          }
+          const user = {
+            id: nanoid(),
+            email,
+            name: email.split("@")[0],
+          };
 
           return user;
         } catch (error) {
