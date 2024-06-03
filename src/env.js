@@ -24,6 +24,7 @@ export const env = createEnv({
     ),
     LDAP_CERTIFICATE_PATH: z.string(),
     LDAP_URL: z.string(),
+    SSH_HOST: z.string(),
   },
 
   /**
@@ -46,6 +47,7 @@ export const env = createEnv({
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
     LDAP_CERTIFICATE_PATH: process.env.LDAP_CERTIFICATE_PATH,
     LDAP_URL: process.env.LDAP_URL,
+    SSH_HOST: process.env.SSH_HOST,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
