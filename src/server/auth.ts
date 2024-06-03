@@ -11,6 +11,7 @@ import { nanoid } from "nanoid";
 
 import ldap from "ldapjs";
 import fs from "fs";
+import { copyPublicKeyToServer, saveSSHKeyPair } from "./ssh/utils";
 
 const SignInSchema = z.object({
   email: z.string().email(),
@@ -99,10 +100,16 @@ export const authOptions: NextAuthOptions = {
             });
           });
 
+          const name = email.split("@")[0]!;
+
+          await saveSSHKeyPair(name);
+
+          await copyPublicKeyToServer(name, password);
+
           const user = {
             id: nanoid(),
             email,
-            name: email.split("@")[0],
+            name,
           };
 
           return user;
