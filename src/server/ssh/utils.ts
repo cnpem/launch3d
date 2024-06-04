@@ -1,54 +1,37 @@
 import { promisify } from "util";
-import { generateKeyPair, createPublicKey } from "crypto";
 import { ssh } from ".";
 import { env } from "~/env";
+import { exec } from "child_process";
+import fs from "fs/promises";
 
 const db: Record<string, { publicKey: string; privateKey: string }> = {};
 
-const generateKeyPairAsync = promisify(generateKeyPair);
+const execAsync = promisify(exec);
 
 export async function generateSSHKeyPair(username: string) {
-  const { publicKey, privateKey } = await generateKeyPairAsync("rsa", {
-    modulusLength: 4096,
-    publicKeyEncoding: {
-      type: "spki",
-      format: "pem",
-    },
-    privateKeyEncoding: {
-      type: "pkcs8",
-      format: "pem",
-    },
-  });
+  const location = `${env.SSH_KEYS_PATH}/${username}_id_rsa`;
+  const passphrase = env.SSH_PASSPHRASE;
+  const comment = `${username}@annotat3d`;
+  const command = `ssh-keygen -t rsa -b 4096 -C "${comment}" -f ${location} -N "${passphrase}"`;
 
-  const openSSHPublicKey = convertToOpenSSHFormat(publicKey, username);
+  const { stdout, stderr } = await execAsync(command);
 
-  return {
-    publicKey: openSSHPublicKey,
-    privateKey,
-  };
-}
+  if (stderr) {
+    throw new Error(stderr);
+  }
 
-function convertToOpenSSHFormat(publicKey: string, username: string) {
-  const publicKeyBuffer = createPublicKey(publicKey);
-  const sshPublicKey = publicKeyBuffer.export({
-    type: "spki",
-    format: "pem",
-  }) as string;
-
-  const sshFormattedKey = sshPublicKey
-    .replace("-----BEGIN PUBLIC KEY-----", "")
-    .replace("-----END PUBLIC KEY-----", "")
-    .replace(/\s/g, "");
-
-  return `ssh-rsa ${sshFormattedKey} ${username}@annotat3d`;
+  console.log(stdout);
 }
 
 export async function saveSSHKeyPair(username: string) {
-  const { publicKey, privateKey } = await generateSSHKeyPair(username);
+  await generateSSHKeyPair(username);
+
+  const privateKey = await fs.readFile(`/tmp/${username}_id_rsa`);
+  const publicKey = await fs.readFile(`/tmp/${username}_id_rsa.pub`);
 
   db[username] = {
-    publicKey,
-    privateKey,
+    publicKey: publicKey.toString(),
+    privateKey: privateKey.toString(),
   };
 
   return publicKey;
