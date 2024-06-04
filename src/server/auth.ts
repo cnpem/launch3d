@@ -54,6 +54,9 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   },
+  pages: {
+    signIn: "/auth/signin",
+  },
   providers: [
     Credentials({
       credentials: {
@@ -93,7 +96,7 @@ export const authOptions: NextAuthOptions = {
             ldapClient.bind(email, password, (error) => {
               if (!!error) {
                 // console.error(error);
-                reject(new Error("Bad Request: Invalid credentials"));
+                reject(new Error("CredentialsSignin"));
               } else {
                 resolve(console.log("LDAP bind successful"));
               }
@@ -115,10 +118,10 @@ export const authOptions: NextAuthOptions = {
           return user;
         } catch (error) {
           if (error instanceof z.ZodError) {
-            throw Error("Bad Request: Invalid credentials");
+            throw Error("CredentialsSignin");
           }
+          throw error;
         }
-        return null;
       },
     }),
   ],
