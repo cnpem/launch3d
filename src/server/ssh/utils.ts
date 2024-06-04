@@ -4,7 +4,19 @@ import { env } from "~/env";
 import { exec } from "child_process";
 import fs from "fs/promises";
 
-const db: Record<string, { publicKey: string; privateKey: string }> = {};
+const createDb = () => {
+  return {} as Record<string, { publicKey: string; privateKey: string }>;
+};
+
+const globalForDb = globalThis as unknown as {
+  db: ReturnType<typeof createDb>;
+};
+
+const db = globalForDb.db ?? createDb();
+
+if (env.NODE_ENV !== "production") {
+  globalForDb.db = db;
+}
 
 const execAsync = promisify(exec);
 
@@ -13,6 +25,16 @@ export async function generateSSHKeyPair(username: string) {
   const passphrase = env.SSH_PASSPHRASE;
   const comment = `${username}@annotat3d`;
   const command = `ssh-keygen -t rsa -b 4096 -C "${comment}" -f ${location} -N "${passphrase}"`;
+
+  const keyExists = await fs
+    .access(location)
+    .then(() => true)
+    .catch(() => false);
+
+  if (keyExists) {
+    await fs.unlink(location);
+    await fs.unlink(`${location}.pub`);
+  }
 
   const { stdout, stderr } = await execAsync(command);
 
@@ -25,9 +47,10 @@ export async function generateSSHKeyPair(username: string) {
 
 export async function saveSSHKeyPair(username: string) {
   await generateSSHKeyPair(username);
+  const location = `${env.SSH_KEYS_PATH}/${username}_id_rsa`;
 
-  const privateKey = await fs.readFile(`/tmp/${username}_id_rsa`);
-  const publicKey = await fs.readFile(`/tmp/${username}_id_rsa.pub`);
+  const privateKey = await fs.readFile(location);
+  const publicKey = await fs.readFile(`${location}.pub`);
 
   db[username] = {
     publicKey: publicKey.toString(),
@@ -92,7 +115,8 @@ export async function copyPublicKeyToServer(
   // filter out existing key
   const existingKeys = existingAuthorizedKeys
     .split("\n")
-    .filter((line) => !line.includes(comment));
+    .filter((line) => !line.includes(comment))
+    .filter(Boolean);
 
   // append new key
   const newAuthorizedKeys = [...existingKeys, publicKey].join("\n");
