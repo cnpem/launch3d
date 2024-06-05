@@ -35,4 +35,60 @@ export const sshRouter = createTRPCRouter({
 
       return stdout;
     }),
+  cat: protectedProcedure
+    .input(z.object({ path: z.string() }))
+    .query(async ({ input, ctx }) => {
+      const name = ctx.session.user.name;
+      if (!name) {
+        throw new Error("No user found");
+      }
+      const keys = getSSHKeys(name);
+      if (!keys) {
+        throw new Error("No keys found for user");
+      }
+
+      const connection = await ssh.connect({
+        host: env.SSH_HOST,
+        username: name,
+        privateKey: keys.privateKey,
+        passphrase: env.SSH_PASSPHRASE,
+      });
+
+      const command = `cat ${input.path}`;
+      const { stdout, stderr } = await connection.execCommand(command);
+
+      if (stderr) {
+        throw new Error(stderr);
+      }
+
+      return stdout;
+    }),
+  head: protectedProcedure
+    .input(z.object({ path: z.string(), lines: z.number().optional() }))
+    .query(async ({ input, ctx }) => {
+      const name = ctx.session.user.name;
+      if (!name) {
+        throw new Error("No user found");
+      }
+      const keys = getSSHKeys(name);
+      if (!keys) {
+        throw new Error("No keys found for user");
+      }
+
+      const connection = await ssh.connect({
+        host: env.SSH_HOST,
+        username: name,
+        privateKey: keys.privateKey,
+        passphrase: env.SSH_PASSPHRASE,
+      });
+
+      const command = `head ${input.lines ? `-n ${input.lines}` : ""} ${input.path}`;
+      const { stdout, stderr } = await connection.execCommand(command);
+
+      if (stderr) {
+        throw new Error(stderr);
+      }
+
+      return stdout;
+    }),
 });
