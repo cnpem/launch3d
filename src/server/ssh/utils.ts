@@ -87,8 +87,9 @@ export async function copyPublicKeyToServer(
   // create directory if it doesn't exist
   await new Promise<void>((resolve, reject) => {
     sftp.mkdir(".ssh", (err) => {
-      if (err && isErrnoException(err) && err.code !== "EEXIST") {
-        reject(err);
+      const error = err as NodeJS.ErrnoException;
+      if (err && isErrnoException(err) && error.code !== "EEXIST") {
+        reject(error);
       } else {
         resolve();
       }
@@ -100,7 +101,8 @@ export async function copyPublicKeyToServer(
     (resolve, reject) => {
       sftp.readFile(".ssh/authorized_keys", (err, data) => {
         if (err) {
-          if (isErrnoException(err) && err.code === "ENOENT") {
+          const error = err as NodeJS.ErrnoException;
+          if (isErrnoException(err) && error.code === "ENOENT") {
             resolve("");
           } else {
             reject(err);
