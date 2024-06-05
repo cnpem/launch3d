@@ -2,9 +2,9 @@
 
 import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
-import { Button } from "~/components/ui/button";
-import { Input } from "~/components/ui/input";
-import { Label } from "~/components/ui/label";
+import { Button } from "~/app/_components/ui/button";
+import { Input } from "~/app/_components/ui/input";
+import { Label } from "~/app/_components/ui/label";
 import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 

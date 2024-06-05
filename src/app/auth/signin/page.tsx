@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { getServerAuthSession } from "~/server/auth";
 import { cn } from "~/lib/utils";
-import { buttonVariants } from "~/components/ui/button";
+import { buttonVariants } from "~/app/_components/ui/button";
 import { MoveLeftIcon } from "lucide-react";
 import { SignInForm } from "./form";
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { getServerAuthSession } from "~/server/auth";
-import { buttonVariants } from "~/components/ui/button";
+import { buttonVariants } from "~/app/_components/ui/button";
 import { MoveUpRightIcon } from "lucide-react";
 import { SignOutButton } from "./_components/signout-button";
 

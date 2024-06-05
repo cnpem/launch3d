@@ -3,7 +3,7 @@ import "~/styles/globals.css";
 import { GeistSans } from "geist/font/sans";
 
 import { TRPCReactProvider } from "~/trpc/react";
-import { Toaster } from "~/components/ui/sonner";
+import { Toaster } from "~/app/_components/ui/sonner";
 
 export const metadata = {
   title: "Launch3D",
