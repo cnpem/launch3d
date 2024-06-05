@@ -5,36 +5,41 @@ import { useForm } from "react-hook-form";
 import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useEffect } from "react";
 
 export const SignInForm = () => {
-  const params = useSearchParams();
-  const callbackUrl = params.get("callbackUrl") ?? "/";
-  const callbackError = params.get("error");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
 
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    reset,
+    formState: { errors, isSubmitting },
   } = useForm<{
     email: string;
     password: string;
   }>();
   const onSubmit = async (data: { email: string; password: string }) => {
-    await signIn("credentials", {
+    toast.info("Signing in...");
+    const res = await signIn("credentials", {
       email: data.email,
       password: data.password,
-      callbackUrl,
+      redirect: false,
     });
-  };
 
-  useEffect(() => {
-    if (callbackError && callbackError === "CredentialsSignin") {
-      toast.error("Invalid credentials");
+    if (res?.ok) {
+      toast.success("Signed in successfully");
+      router.push(callbackUrl);
     }
-  }, [callbackError]);
+
+    if (!res?.ok) {
+      toast.error("Invalid credentials");
+      reset();
+    }
+  };
 
   return (
     <form
@@ -50,6 +55,8 @@ export const SignInForm = () => {
           type="text"
           id="email"
           placeholder="user.name@example.com"
+          data-invalid={errors.email ? true : false}
+          className="data-[invalid=true]:border-red-600 data-[invalid=true]:ring-red-600"
           {...register("email", { required: "Email is required!" })}
         />
       </Label>
@@ -62,12 +69,19 @@ export const SignInForm = () => {
           type="password"
           id="password"
           placeholder="Password"
+          data-invalid={errors.password ? true : false}
+          className="data-[invalid=true]:border-red-600 data-[invalid=true]:ring-red-600"
           {...register("password", {
             required: "Password is required!",
           })}
         />
       </Label>
-      <Button className="w-full" variant="default" type="submit">
+      <Button
+        className="w-full"
+        variant="default"
+        type="submit"
+        disabled={isSubmitting}
+      >
         Sign in
       </Button>
     </form>
