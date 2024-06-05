@@ -2,7 +2,8 @@ import Link from "next/link";
 
 import { getServerAuthSession } from "~/server/auth";
 import { buttonVariants } from "~/components/ui/button";
-import {MoveUpRightIcon} from 'lucide-react';
+import { MoveUpRightIcon } from "lucide-react";
+import { SignOutButton } from "./_components/signout-button";
 
 export default async function Home() {
   const session = await getServerAuthSession();
@@ -22,19 +23,23 @@ export default async function Home() {
               {session && <span>Logged in as {session.user?.name}</span>}
             </p>
             <div className="flex gap-4">
-              <Link
-                href={session ? "/api/auth/signout" : "/api/auth/signin"}
-                className={buttonVariants({variant:"default"})}
-              >
-                {session ? "Sign out" : "Sign in"}
-              </Link>
+              {session ? (
+                <SignOutButton />
+              ) : (
+                <Link
+                  href="/api/auth/signin"
+                  className={buttonVariants({ variant: "default" })}
+                >
+                  Sign in
+                </Link>
+              )}
               {session && (
                 <Link
                   href="/example"
-                  className={buttonVariants({variant:"link"})}
+                  className={buttonVariants({ variant: "link" })}
                 >
                   Secret Page
-                  <MoveUpRightIcon className="w-4 h-4 ml-2" />
+                  <MoveUpRightIcon className="ml-2 h-4 w-4" />
                 </Link>
               )}
             </div>
