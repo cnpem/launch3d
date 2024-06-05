@@ -5,7 +5,7 @@ and to provide a simple interface to submit new Annotat3D jobs through the slurm
 
 ## TODO
 
-- [ ] Login page
+- [x] Signin page
 - [x] LDAP Credentials authentication
 - [x] ssh on login
 - [ ] User area with Annotat3D job status
