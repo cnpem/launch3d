@@ -33,6 +33,7 @@ export const SignInForm = () => {
     if (res?.ok) {
       toast.success("Signed in successfully");
       router.push(callbackUrl);
+      router.refresh();
     }
 
     if (!res?.ok) {
