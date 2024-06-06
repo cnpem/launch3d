@@ -8,10 +8,13 @@ and to provide a simple interface to submit new Annotat3D jobs through the slurm
 - [x] Signin page
 - [x] LDAP Credentials authentication
 - [x] ssh on login
-- [ ] User area with Annotat3D job status
-- [ ] Submit new Annotat3D job
-- [ ] Parse Annotat3D job url
-- [ ] Redirection to Annotat3D url
-- [ ] Job status monitoring
-- [ ] Job deletion
+- [x] User area with Annotat3D job status
+- [x] Submit new Annotat3D job
+- [x] Parse Annotat3D job url
+- [x] Redirection to Annotat3D url
+- [x] Job status monitoring
+- [x] Job deletion
 - [ ] Expire idle jobs
+- [ ] Select components for partition and gpu on job form
+- [ ] Persist job id in the user session
+- [ ] Improve the design of the instances page
