@@ -2,6 +2,7 @@ import { postRouter } from "~/server/api/routers/post";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { sshRouter } from "./routers/ssh";
 import { jobRouter } from "./routers/job";
+import { annotat3dRouter } from "./routers/annotat3d";
 
 /**
  * This is the primary router for your server.
@@ -12,6 +13,7 @@ export const appRouter = createTRPCRouter({
   post: postRouter,
   ssh: sshRouter,
   job: jobRouter,
+  annotat3d: annotat3dRouter,
 });
 
 // export type definition of API

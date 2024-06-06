@@ -20,11 +20,11 @@ export const annotat3dRouter = createTRPCRouter({
     .input(
       z.object({
         partition: z.string(),
-        gpus: z.number(),
-        cpus: z.number(),
+        gpus: z.coerce.number(),
+        cpus: z.coerce.number(),
       }),
     )
-    .query(async ({ input, ctx }) => {
+    .mutation(async ({ input, ctx }) => {
       const name = ctx.session.user.name;
       if (!name) {
         throw new Error("No user found");
@@ -46,10 +46,10 @@ export const annotat3dRouter = createTRPCRouter({
         "#SBATCH --partition=" + input.partition,
         "#SBATCH --cpus-per-task=" + input.cpus,
         "#SBATCH --job-name=annotat3d-start",
-        "#SBATCH --output=annotat3d-start-%j-%x.out",
-        "#SBATCH --error=annotat3d-start-%j-%x.err",
+        "#SBATCH --output=annotat3d-start-%j.out",
+        "#SBATCH --error=annotat3d-start-%j.err",
         "#SBATCH --gres=gpu:" + input.gpus,
-        "echo 'Hello from annotat3d'",
+        "bash " + env.ANNOTAT3D_SCRIPT_PATH,
       ].join("\n");
 
       const { tmpDir, scriptPath } = await createTmpScript(content);
