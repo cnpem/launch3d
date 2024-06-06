@@ -35,10 +35,10 @@ export default async function Home() {
               )}
               {session && (
                 <Link
-                  href="/example"
+                  href="/instances"
                   className={buttonVariants({ variant: "link" })}
                 >
-                  Secret Page
+                  Instances
                   <MoveUpRightIcon className="ml-2 h-4 w-4" />
                 </Link>
               )}
