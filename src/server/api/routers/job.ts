@@ -28,7 +28,7 @@ export const jobRouter = createTRPCRouter({
         passphrase: env.SSH_PASSPHRASE,
       });
 
-      const command = `sacct -j ${jobId}.batch --format=State --parsable2`;
+      const command = `sacct --job ${jobId}.batch --format=State --parsable2`;
       const { stdout, stderr } = await connection.execCommand(command);
 
       connection.dispose();
@@ -41,7 +41,7 @@ export const jobRouter = createTRPCRouter({
       const status = lines[1];
       if (!status) {
         // If the status is empty, it means the job.batch wasn't found, but the job might be PENDING
-        const command = `sacct -j ${jobId} --format=State --parsable2`;
+        const command = `sacct --job ${jobId} --format=State --parsable2`;
         const { stdout, stderr } = await connection.execCommand(command);
         if (stderr) {
           throw new Error(stderr);
@@ -85,4 +85,44 @@ export const jobRouter = createTRPCRouter({
 
       return { cancelStatus: "CANCELLED" };
     }),
+  report: protectedProcedure
+  .input(
+    z.object({
+      jobId: z.string(),
+    }),
+  )
+  .query(async ({ ctx, input }) => {
+    const jobId = input.jobId;
+    const username = ctx.session.user.name;
+    if (!username) {
+      throw new Error("No user found");
+    }
+    const keys = getSSHKeys(username);
+    if (!keys) {
+      throw new Error("No keys found for user");
+    }
+    const connection = await ssh.connect({
+      host: env.SSH_HOST,
+      username: username,
+      privateKey: keys.privateKey,
+      passphrase: env.SSH_PASSPHRASE,
+    });
+
+    const command = `sacct --format="State,Start,Elapsed,Partition,NodeList,AllocGRES,AllocCPUS" --parsable2 --job ${jobId}`;
+    const { stdout, stderr } = await connection.execCommand(command);
+
+    connection.dispose();
+    if (stderr) {
+      throw new Error(stderr);
+    }
+
+    // the results come in many lines, the first line is the header and the second is the actual data we want
+    const lines = stdout.trim().split("\n");
+    const data = lines[1];
+    if (!data) {
+      throw new Error("No data found");
+    }
+    const [state, start, elapsed, partition, nodeList, allocGRES, allocCPUS] = data.split("|");
+    return { state, start, elapsed, partition, nodeList, allocGRES, allocCPUS };
+  }),
 });
