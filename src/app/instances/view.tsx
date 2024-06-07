@@ -87,7 +87,12 @@ function InstanceView({ jobId, setJobId }: { jobId: string, setJobId: (jobId: st
         {url && (
           <p>
             Access the Annotat3D-web instance in{" "}
-            <Link href={url} className="text-blue-500">
+            <Link
+              href={url}
+              className="text-blue-500"
+              rel="noreferrer noopener"
+              target="_blank"
+            >
               {url}
             </Link>
           </p>
