@@ -7,6 +7,7 @@ import NewInstanceForm from "./new";
 import Logs from "./logs";
 import { Button } from "~/app/_components/ui/button";
 import { SignOutButton } from "~/app/_components/signout-button";
+import { jobName } from "~/lib/constants";
 
 export default function View() {
   const [jobId, setJobId] = useQueryState("jobId", { defaultValue: "" });
@@ -61,7 +62,7 @@ function InstanceView({
 
   const stdout = api.ssh.head.useQuery(
     {
-      path: `~/annotat3d-start-${jobId}.out`,
+      path: `~/${jobName}-${jobId}.out`,
       lines: 25,
     },
     {

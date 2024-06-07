@@ -6,6 +6,7 @@ import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
+import { jobName, jobLogName } from "~/lib/constants";
 
 async function createTmpScript(content: string) {
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "annotat3d-"));
@@ -41,19 +42,22 @@ export const annotat3dRouter = createTRPCRouter({
         passphrase: env.SSH_PASSPHRASE,
       });
 
-      const content = [
-        "#!/bin/bash",
-        "#SBATCH --partition=" + input.partition,
-        "#SBATCH --cpus-per-task=" + input.cpus,
-        "#SBATCH --job-name=annotat3d-start",
-        "#SBATCH --output=annotat3d-start-%j.out",
-        "#SBATCH --error=annotat3d-start-%j.err",
-        "#SBATCH --gres=gpu:" + input.gpus,
-        "bash " + env.ANNOTAT3D_SCRIPT_PATH,
-      ].join("\n");
+      const templatePath = 'public/templates/annotat3d-sbatch.sh';
+      const scriptTemplate = await fs.readFile(templatePath, 'utf-8');
+
+      const content = scriptTemplate
+        .replace('${INPUT_PARTITION}', input.partition)
+        .replace('${INPUT_CPUS}', input.cpus.toString())
+        .replace('${INPUT_GPUS}', input.gpus.toString())
+        .replace('${ENV_ANNOTAT3D_JOB_NAME}', jobName)
+        .replace('${ENV_ANNOTAT3D_LOG_OUT}', `${jobLogName}.out`)
+        .replace('${ENV_ANNOTAT3D_LOG_ERR}', `${jobLogName}.err`)
+        .replace('${ENV_ANNOTAT3D_IMAGE_PATH}', env.ANNOTAT3D_IMAGE_PATH)
+        .replace('${ENV_ANNOTAT3D_PORT_RANGE0}', env.ANNOTAT3D_PORT_RANGE0)
+        .replace('${ENV_ANNOTAT3D_PORT_RANGE1}', env.ANNOTAT3D_PORT_RANGE1);
 
       const { tmpDir, scriptPath } = await createTmpScript(content);
-      const scriptName = "annotat3d-start.sbatch";
+      const scriptName = `${jobName}.sbatch`;
       await connection.putFile(scriptPath, scriptName);
       await fs.rm(tmpDir, { recursive: true });
 

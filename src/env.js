@@ -27,7 +27,9 @@ export const env = createEnv({
     SSH_HOST: z.string(),
     SSH_PASSPHRASE: z.string().optional(),
     SSH_KEYS_PATH: z.string(),
-    ANNOTAT3D_SCRIPT_PATH: z.string(),
+    ANNOTAT3D_IMAGE_PATH: z.string(),
+    ANNOTAT3D_PORT_RANGE0: z.string(),
+    ANNOTAT3D_PORT_RANGE1: z.string(),
   },
 
   /**
@@ -53,7 +55,9 @@ export const env = createEnv({
     SSH_HOST: process.env.SSH_HOST,
     SSH_PASSPHRASE: process.env.SSH_PASSPHRASE,
     SSH_KEYS_PATH: process.env.SSH_KEYS_PATH,
-    ANNOTAT3D_SCRIPT_PATH: process.env.ANNOTAT3D_SCRIPT_PATH,
+    ANNOTAT3D_IMAGE_PATH: process.env.ANNOTAT3D_IMAGE_PATH,
+    ANNOTAT3D_PORT_RANGE0: process.env.ANNOTAT3D_PORT_RANGE0,
+    ANNOTAT3D_PORT_RANGE1: process.env.ANNOTAT3D_PORT_RANGE1,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

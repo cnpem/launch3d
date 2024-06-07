@@ -7,6 +7,7 @@ import {
   TabsTrigger,
 } from "~/app/_components/ui/tabs";
 import { Textarea } from "~/app/_components/ui/textarea";
+import { jobName } from "~/lib/constants";
 
 export default function LogView({
   jobId,
@@ -14,11 +15,11 @@ export default function LogView({
   jobId: string;
 }) {
   const stdout = api.ssh.cat.useQuery({
-    path: `~/annotat3d-start-${jobId}.out`,
+    path: `~/${jobName}-${jobId}.out`,
   });
 
   const stderr = api.ssh.cat.useQuery({
-    path: `~/annotat3d-start-${jobId}.err`,
+    path: `~/${jobName}-${jobId}.err`,
   });
 
   function checkData(data: string | undefined, isLoading: boolean, isError: boolean) {
