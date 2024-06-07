@@ -2,25 +2,27 @@
 import { useCallback } from "react";
 import Link from "next/link";
 import { api } from "~/trpc/react";
-import { useQueryState } from 'nuqs';
+import { useQueryState } from "nuqs";
 import NewInstanceForm from "./new";
 import Logs from "./logs";
 import { Button } from "~/app/_components/ui/button";
 import { SignOutButton } from "~/app/_components/signout-button";
 
 export default function View() {
-  const [jobId, setJobId] = useQueryState("jobId", { defaultValue: '' });
+  const [jobId, setJobId] = useQueryState("jobId", { defaultValue: "" });
 
-  const onJobIdChange = useCallback(async (jobId: string | undefined) => {
-    await setJobId(jobId ?? '');
-  }
-  , [setJobId]);
+  const onJobIdChange = useCallback(
+    async (jobId: string | undefined) => {
+      await setJobId(jobId ?? "");
+    },
+    [setJobId],
+  );
 
   if (!jobId) {
     return <NewInstanceForm setJobId={onJobIdChange} />;
   }
 
-  return <InstanceView jobId={jobId} setJobId={onJobIdChange}/>;
+  return <InstanceView jobId={jobId} setJobId={onJobIdChange} />;
 }
 
 function getAnnotat3dWebUrl(rawTxt: string | undefined) {
@@ -35,7 +37,13 @@ function getAnnotat3dWebUrl(rawTxt: string | undefined) {
   return url;
 }
 
-function InstanceView({ jobId, setJobId }: { jobId: string, setJobId: (jobId: string | undefined) => void}) {
+function InstanceView({
+  jobId,
+  setJobId,
+}: {
+  jobId: string;
+  setJobId: (jobId: string | undefined) => void;
+}) {
   const utils = api.useUtils();
   const report = api.job.report.useQuery(
     { jobId },
@@ -73,15 +81,15 @@ function InstanceView({ jobId, setJobId }: { jobId: string, setJobId: (jobId: st
         <p>Job status: {report.data?.state}</p>
         {report.data && (
           <>
-            <p>Report</p>
+            <p className="font-semibold">Report</p>
 
             <p>State: {report.data.state}</p>
             <p>Partition: {report.data.partition}</p>
+            <p>AllocGRES: {report.data.allocGRES}</p>
+            <p>AllocCPUS: {report.data.allocCPUS}</p>
             <p>Node: {report.data.nodeList}</p>
             <p>Start time: {report.data.start}</p>
             <p>Elapsed time: {report.data.elapsed}</p>
-            <p>AllocGRES: {report.data.allocGRES}</p>
-            <p>AllocCPUS: {report.data.allocCPUS}</p>
           </>
         )}
         {url && (
@@ -98,7 +106,9 @@ function InstanceView({ jobId, setJobId }: { jobId: string, setJobId: (jobId: st
           </p>
         )}
         <StopOrClearButton
-          running={report.data?.state === "RUNNING" || report.data?.state === "PENDING"}
+          running={
+            report.data?.state === "RUNNING" || report.data?.state === "PENDING"
+          }
           onCancel={() => cancel.mutate({ jobId })}
           onClear={() => {
             setJobId(undefined);
