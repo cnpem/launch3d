@@ -14,6 +14,8 @@ and to provide a simple interface to submit new Annotat3D jobs through the slurm
 - [x] Redirection to Annotat3D url
 - [x] Job status monitoring
 - [x] Job deletion
+- [x] Complete job script from a template controlled by the app
+- [ ] Clean/Delete logs button + action
 - [ ] Expire idle jobs
 - [ ] Select components for partition and gpu on job form
 - [ ] Persist job id in the user session
