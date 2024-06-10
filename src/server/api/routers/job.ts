@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
 import { ssh } from "~/server/ssh";
 import { getSSHKeys } from "~/server/ssh/utils";
 import { env } from "~/env";
+import { TRPCError } from "@trpc/server";
 
 export const jobRouter = createTRPCRouter({
   status: protectedProcedure
@@ -108,22 +109,29 @@ export const jobRouter = createTRPCRouter({
         passphrase: env.SSH_PASSPHRASE,
       });
 
-      const command = `sacct --format="State,Start,Elapsed,Partition,NodeList,AllocGRES,AllocCPUS" --parsable2 --job ${jobId}`;
+      const command = `sacct --format="State,Start,Elapsed,Partition,NodeList,AllocGRES,AllocCPUS" --parsable2 --job ${jobId} --noheader`;
       const { stdout, stderr } = await connection.execCommand(command);
 
       connection.dispose();
       if (stderr) {
-        throw new Error(stderr);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: stderr,
+        });
       }
 
       // the results come in many lines, the first line is the header and the second is the actual data we want
-      const lines = stdout.trim().split("\n");
-      const data = lines[1];
-      if (!data) {
-        throw new Error("No data found");
+      const data = stdout.trim();
+      if (data.length === 0) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Job data not found",
+        });
       }
+      
       const [state, start, elapsed, partition, nodeList, allocGRES, allocCPUS] =
         data.split("|");
+
       return {
         state,
         start,
