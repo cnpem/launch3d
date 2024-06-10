@@ -39,6 +39,8 @@ export const env = createEnv({
    */
   client: {
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    NEXT_PUBLIC_SLURM_GPU_OPTIONS: z.string(),
+    NEXT_PUBLIC_SLURM_MAX_CPUS: z.string(),
   },
 
   /**
@@ -58,6 +60,8 @@ export const env = createEnv({
     ANNOTAT3D_IMAGE_PATH: process.env.ANNOTAT3D_IMAGE_PATH,
     ANNOTAT3D_PORT_RANGE0: process.env.ANNOTAT3D_PORT_RANGE0,
     ANNOTAT3D_PORT_RANGE1: process.env.ANNOTAT3D_PORT_RANGE1,
+    NEXT_PUBLIC_SLURM_GPU_OPTIONS:  process.env.NEXT_PUBLIC_SLURM_GPU_OPTIONS,
+    NEXT_PUBLIC_SLURM_MAX_CPUS: process.env.NEXT_PUBLIC_SLURM_MAX_CPUS,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

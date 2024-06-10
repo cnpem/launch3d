@@ -21,7 +21,7 @@ export const annotat3dRouter = createTRPCRouter({
     .input(
       z.object({
         partition: z.string(),
-        gpus: z.coerce.number(),
+        gpus: z.string(),
         cpus: z.coerce.number(),
       }),
     )
@@ -48,7 +48,7 @@ export const annotat3dRouter = createTRPCRouter({
       const content = scriptTemplate
         .replace('${INPUT_PARTITION}', input.partition)
         .replace('${INPUT_CPUS}', input.cpus.toString())
-        .replace('${INPUT_GPUS}', input.gpus.toString())
+        .replace('${INPUT_GPUS}', input.gpus)
         .replace('${ENV_ANNOTAT3D_JOB_NAME}', jobName)
         .replace('${ENV_ANNOTAT3D_LOG_OUT}', `${jobLogName}.out`)
         .replace('${ENV_ANNOTAT3D_LOG_ERR}', `${jobLogName}.err`)

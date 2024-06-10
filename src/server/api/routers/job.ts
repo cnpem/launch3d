@@ -134,4 +134,51 @@ export const jobRouter = createTRPCRouter({
         allocCPUS,
       };
     }),
+  partitionOptions: protectedProcedure.query(async ({ ctx }) => {
+    const username = ctx.session.user.name;
+    if (!username) {
+      throw new Error("No user found");
+    }
+    const keys = getSSHKeys(username);
+    if (!keys) {
+      throw new Error("No keys found for user");
+    }
+    const connection = await ssh.connect({
+      host: env.SSH_HOST,
+      username: username,
+      privateKey: keys.privateKey,
+      passphrase: env.SSH_PASSPHRASE,
+    });
+
+    const command = `sinfo --format=%P --noheader && echo "###" && sacctmgr show association -P -r format=Partition Users=${username} --noheader`;
+    const { stdout, stderr } = await connection.execCommand(command);
+
+    connection.dispose();
+    if (stderr) {
+      throw new Error(stderr);
+    }
+
+    // the result is two lists separated by a ### string,
+    // the first list is a list of all the partitions available in the cluster
+    // the second list is a list of all the specific partitions available for that user
+    // if the second list has an empty line, the user can submit jobs for all the partitions of the cluster
+    const [clusterStr, userStr] = stdout.trim().split("###\n");
+
+    const clusterPartitions = clusterStr?.split("\n");
+    const userPartitions = userStr?.split("\n");
+
+    if (!clusterPartitions) {
+      throw new Error(
+        "Cannot find available partitions of the cluster with sinfo.",
+      );
+    }
+
+    if (!userPartitions) {
+      return {
+        partitions: clusterPartitions,
+      };
+    }
+
+    return { partitions: userPartitions };
+  }),
 });
