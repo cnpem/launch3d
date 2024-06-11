@@ -33,6 +33,8 @@ export default function NewInstanceForm({
 }: {
   setJobId: (id: string | undefined) => void;
 }) {
+  const utils = api.useUtils();
+
   const partitionOptions = api.job.partitionOptions.useQuery();
 
   const formSchema = z
@@ -74,10 +76,11 @@ export default function NewInstanceForm({
   });
 
   const createInstance = api.annotat3d.start.useMutation({
-    onSuccess: ({ jobId }) => {
+    onSuccess: async ({ jobId }) => {
       toast.success("Instance started successfully");
       setJobId(jobId);
       form.reset();
+      await utils.job.userRecentJobs.invalidate();
     },
     onError: (error) => {
       toast.error(error.message);
