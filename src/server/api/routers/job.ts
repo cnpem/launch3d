@@ -110,7 +110,7 @@ export const jobRouter = createTRPCRouter({
         passphrase: env.SSH_PASSPHRASE,
       });
 
-      const command = `sacct --format="State,Start,Elapsed,Partition,NodeList,AllocGRES,AllocCPUS" --parsable2 --job ${jobId} --noheader`;
+      const command = `sacct --format="State,Submit,Start,End,Elapsed,Partition,NodeList,AllocGRES,NCPUS,Reason,ExitCode" --parsable2 --job ${jobId} --noheader`;
       const { stdout, stderr } = await connection.execCommand(command);
 
       connection.dispose();
@@ -130,17 +130,21 @@ export const jobRouter = createTRPCRouter({
         });
       }
       
-      const [state, start, elapsed, partition, nodeList, allocGRES, allocCPUS] =
+      const [state, submit, start, end, elapsed, partition, nodeList, allocGRES, nCPUS, reason, exitCode] =
         data.split("|");
 
+      // some of the fields have multiple values separated by new lines or spaces, generally we only want the first value
       return {
-        state,
+        state: state?.split(' ')[0] ?? state,
+        submit,
         start,
+        end,
         elapsed,
         partition,
         nodeList,
         allocGRES,
-        allocCPUS,
+        nCPUS: nCPUS,
+        reason: `${state}, exit code: ${exitCode}, reason: ${reason}`, 
       };
     }),
   partitionOptions: protectedProcedure.query(async ({ ctx }) => {
