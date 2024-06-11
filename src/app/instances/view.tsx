@@ -1,18 +1,28 @@
 "use client";
 import { useCallback } from "react";
-import Link from "next/link";
-import { api } from "~/trpc/react";
 import { useQueryState } from "nuqs";
-import NewInstanceForm from "./new";
-import Logs from "./logs";
-import { Button } from "~/app/_components/ui/button";
 
-import { cn } from "~/lib/utils";
-import { buttonVariants } from "~/app/_components/ui/button";
-import { jobName } from "~/lib/constants";
-import { MoveLeftIcon } from "lucide-react";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { toast } from "sonner";
+
+import {
+  CheckIcon,
+  EllipsisIcon,
+  MoveLeftIcon,
+  TriangleAlertIcon,
+} from "lucide-react";
+
+import { api } from "~/trpc/react";
+
+import { cn } from "~/lib/utils";
+import { jobName } from "~/lib/constants";
+
+import NewInstanceForm from "./new";
+import Logs from "./logs";
+
+import { Button } from "~/app/_components/ui/button";
+import { buttonVariants } from "~/app/_components/ui/button";
 
 export default function View() {
   const [jobId, setJobId] = useQueryState("jobId", { defaultValue: "" });
@@ -55,7 +65,6 @@ function InstanceView({
     { jobId },
     {
       enabled: !!jobId,
-      refetchOnMount: true,
     },
   );
 
@@ -77,15 +86,15 @@ function InstanceView({
 
   const clear = api.ssh.rm.useMutation({
     onSuccess: async () => {
-      setJobId(undefined)
+      setJobId(undefined);
       toast.dismiss();
-      toast.success("Log files cleared"); 
+      toast.success("Log files cleared");
     },
     onError: async (error) => {
-      setJobId(undefined)
+      setJobId(undefined);
       toast.dismiss();
       toast.error(error.message);
-    }
+    },
   });
 
   const url = getAnnotat3dWebUrl(stdout.data);
@@ -112,21 +121,60 @@ function InstanceView({
         </Link>
       </div>
       <div className="w-1/3">
-        <p>Job ID: {jobId}</p>
-        <p>Job status: {report.data?.state}</p>
-        {report.data && (
-          <>
-            <p className="font-semibold">Report</p>
-
-            <p>State: {report.data.state}</p>
-            <p>Partition: {report.data.partition}</p>
-            <p>AllocGRES: {report.data.allocGRES}</p>
-            <p>AllocCPUS: {report.data.allocCPUS}</p>
-            <p>Node: {report.data.nodeList}</p>
-            <p>Start time: {report.data.start}</p>
-            <p>Elapsed time: {report.data.elapsed}</p>
-          </>
-        )}
+        <div className="mb-3 flex w-full flex-row items-center">
+          <h1 className="text-3xl font-extrabold tracking-tight">
+            Annotat<span className="text-[hsl(280,100%,70%)]">3D</span>
+          </h1>
+        </div>
+        <div className="mt-10">
+          <ol className="relative border-s border-gray-200 text-gray-500 dark:border-gray-700 dark:text-gray-400">
+            <li className="mb-10 ms-6">
+              <ErrorSuccessOrDefaultIcon
+                errorCondition={false}
+                successCondition={!!report.data?.submit}
+              />
+              <h3 className="font-medium leading-tight">Submit</h3>
+              <div className="text-sm">
+                <p>Submit time: {report.data?.submit}</p>
+                <p>Partition: {report.data?.partition}</p>
+                <p>AllocGRES: {report.data?.allocGRES}</p>
+                <p>AllocCPUS: {report.data?.nCPUS}</p>
+                <p>Node: {report.data?.nodeList}</p>
+              </div>
+            </li>
+            <li className="mb-10 ms-6">
+              <ErrorSuccessOrDefaultIcon
+                errorCondition={
+                  report.data?.state === "ERROR" ||
+                  report.data?.elapsed === "00:00:00"
+                }
+                successCondition={
+                  report.data?.state === "COMPLETED" ||
+                  report.data?.state === "CANCELLED"
+                }
+              />
+              <h3 className="font-medium leading-tight">Running</h3>
+              <div className="text-sm">
+                <p>Start Time: {report.data?.start}</p>
+                <p>Elapsed: {report.data?.elapsed}</p>
+                <p>Link: {url}</p>
+              </div>
+            </li>
+            <li className="mb-10 ms-6">
+              <ErrorSuccessOrDefaultIcon
+                errorCondition={report.data?.state === "ERROR"}
+                successCondition={
+                  report.data?.state === "COMPLETED" ||
+                  report.data?.state === "CANCELLED"
+                }
+              />
+              <h3 className="font-medium leading-tight">Stop</h3>
+              <div className="text-sm">
+                <p>State: {report.data?.reason}</p>
+              </div>
+            </li>
+          </ol>
+        </div>
         {url && (
           <p>
             Access the Annotat3D-web instance in{" "}
@@ -140,20 +188,17 @@ function InstanceView({
             </Link>
           </p>
         )}
-        <div className="flex flex-row gap-2">
+        <div className="my-2 flex flex-row gap-2">
           <div>
-            {report.data?.state === "RUNNING" ||
-            report.data?.state === "PENDING" ? (
-              <Button
-                variant={"destructive"}
-                onClick={() => cancel.mutate({ jobId })}
-              >
-                Stop instance
-              </Button>
-            ) : (
-              <Button
-                variant={"destructive"}
-                onClick={() =>
+            <Button
+              variant={"destructive"}
+              onClick={() => {
+                if (
+                  report.data?.state === "RUNNING" ||
+                  report.data?.state === "PENDING"
+                ) {
+                  cancel.mutate({ jobId });
+                } else {
                   toast(
                     <div className="flex flex-col gap-2">
                       <p className="font-bold">Delete log files?</p>
@@ -185,18 +230,76 @@ function InstanceView({
                         </Button>
                       </div>
                     </div>,
-                  )
+                  );
                 }
-              >
-                Clear dashboard
-              </Button>
-            )}
+              }}
+            >
+              {report.data?.state === "RUNNING" ||
+              report.data?.state === "PENDING"
+                ? "Stop instance"
+                : "Clear dashboard"}
+            </Button>
           </div>
         </div>
       </div>
-      <div className="h-full w-2/3">
+      <div className="w-2/3">
         <Logs jobId={jobId} />
       </div>
     </div>
   );
+}
+
+function CompleteIcon({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "absolute -start-4 flex h-8 w-8 items-center justify-center rounded-full bg-green-200 ring-4 ring-white dark:bg-green-900 dark:ring-gray-900",
+        className,
+      )}
+    >
+      <CheckIcon className="h-4 w-4 text-green-500 dark:text-green-400" />
+    </span>
+  );
+}
+
+function WaitingIcon({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "absolute -start-4 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 ring-4 ring-white dark:bg-gray-700 dark:ring-gray-900",
+        className,
+      )}
+    >
+      <EllipsisIcon className="h-4 w-4 animate-pulse text-gray-500 dark:text-gray-400" />
+    </span>
+  );
+}
+
+function ErrorIcon({ className }: { className?: string }) {
+  return (
+    <span
+      className={cn(
+        "absolute -start-4 flex h-8 w-8 items-center justify-center rounded-full bg-red-200 ring-4 ring-white dark:bg-red-900 dark:ring-gray-900",
+        className,
+      )}
+    >
+      <TriangleAlertIcon className="h-4 w-4 text-red-500 dark:text-red-400" />
+    </span>
+  );
+}
+
+function ErrorSuccessOrDefaultIcon({
+  errorCondition,
+  successCondition,
+}: {
+  errorCondition: boolean;
+  successCondition: boolean;
+}) {
+  if (errorCondition) {
+    return <ErrorIcon />;
+  } else if (successCondition) {
+    return <CompleteIcon />;
+  } else {
+    return <WaitingIcon />;
+  }
 }
