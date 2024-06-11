@@ -4,6 +4,7 @@ import { ssh } from "~/server/ssh";
 import { getSSHKeys } from "~/server/ssh/utils";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
+import { jobName } from "~/lib/constants";
 
 export const jobRouter = createTRPCRouter({
   status: protectedProcedure
@@ -188,5 +189,37 @@ export const jobRouter = createTRPCRouter({
     }
 
     return { partitions: userPartitions };
+  }),
+  userRecentJobs: protectedProcedure.query(async ({ ctx }) => {
+    const username = ctx.session.user.name;
+    if (!username) {
+      throw new Error("No user found");
+    }
+    const keys = getSSHKeys(username);
+    if (!keys) {
+      throw new Error("No keys found for user");
+    }
+    const connection = await ssh.connect({
+      host: env.SSH_HOST,
+      username: username,
+      privateKey: keys.privateKey,
+      passphrase: env.SSH_PASSPHRASE,
+    });
+
+    const command = `sacct --parsable2 --user ${username} --name ${jobName} --allocations --format=JobID,State --noheader`
+    const { stdout, stderr } = await connection.execCommand(command);
+
+    connection.dispose();
+    if (stderr) {
+      throw new Error(stderr);
+    }
+
+    const jobs = stdout.trim().split("\n").map((line) => {
+      const [jobId, state] = line.split("|");
+      return { jobId, state };
+    }
+    );
+
+    return { jobs };
   }),
 });
