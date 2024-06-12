@@ -36,6 +36,13 @@ export async function generateSSHKeyPair(username: string) {
     await fs.unlink(`${location}.pub`);
   }
 
+  // create directory if it doesn't exist
+  try {
+    await fs.mkdir(env.SSH_KEYS_PATH, { recursive: true });
+  } catch (err) {
+    console.error(err);
+  }
+
   const { stdout, stderr } = await execAsync(command);
 
   if (stderr) {
