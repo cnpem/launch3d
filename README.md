@@ -15,8 +15,12 @@ and to provide a simple interface to submit new Annotat3D jobs through the slurm
 - [x] Job status monitoring
 - [x] Job deletion
 - [x] Complete job script from a template controlled by the app
-- [ ] Clean/Delete logs button + action
+- [x] Clean/Delete logs button + action
 - [ ] Expire idle jobs
-- [ ] Select components for partition and gpu on job form
-- [ ] Persist job id in the user session
-- [ ] Improve the design of the instances page
+- [x] Select components for partition and gpu on job form
+- [x] Persist job id in the user session
+- [x] Improve the design of the instances page
+- [ ] Better state management of the instances
+- [ ] Dockerfile
+- [ ] CI build
+- [ ] Deployment
