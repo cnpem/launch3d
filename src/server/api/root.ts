@@ -1,4 +1,3 @@
-import { postRouter } from "~/server/api/routers/post";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 import { sshRouter } from "./routers/ssh";
 import { jobRouter } from "./routers/job";
@@ -10,7 +9,6 @@ import { annotat3dRouter } from "./routers/annotat3d";
  * All routers added in /api/routers should be manually added here.
  */
 export const appRouter = createTRPCRouter({
-  post: postRouter,
   ssh: sshRouter,
   job: jobRouter,
   annotat3d: annotat3dRouter,
