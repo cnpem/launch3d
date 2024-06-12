@@ -22,5 +22,5 @@ and to provide a simple interface to submit new Annotat3D jobs through the slurm
 - [x] Improve the design of the instances page
 - [ ] Better state management of the instances
 - [x] Dockerfile
-- [ ] CI build
+- [x] CI build
 - [ ] Deployment
