@@ -129,13 +129,24 @@ export const jobRouter = createTRPCRouter({
           message: "Job data not found",
         });
       }
-      
-      const [state, submit, start, end, elapsed, partition, nodeList, allocGRES, nCPUS, reason, exitCode] =
-        data.split("|");
+
+      const [
+        state,
+        submit,
+        start,
+        end,
+        elapsed,
+        partition,
+        nodeList,
+        allocGRES,
+        nCPUS,
+        reason,
+        exitCode,
+      ] = data.split("|");
 
       // some of the fields have multiple values separated by new lines or spaces, generally we only want the first value
       return {
-        state: state?.split(' ')[0] ?? state,
+        state: state?.split(" ")[0] ?? state,
         submit,
         start,
         end,
@@ -144,7 +155,7 @@ export const jobRouter = createTRPCRouter({
         nodeList,
         allocGRES,
         nCPUS: nCPUS,
-        reason: `${state}, exit code: ${exitCode}, reason: ${reason}`, 
+        reason: `${state}, exit code: ${exitCode}, reason: ${reason}`,
       };
     }),
   partitionOptions: protectedProcedure.query(async ({ ctx }) => {
@@ -209,21 +220,32 @@ export const jobRouter = createTRPCRouter({
       privateKey: keys.privateKey,
       passphrase: env.SSH_PASSPHRASE,
     });
-
-    const command = `sacct --parsable2 --user ${username} --name ${jobName} --allocations --format=JobID,State --noheader`
+  
+    const command = `sacct --parsable2 --user ${username} --name ${jobName} --allocations --format=JobID,State --noheader`;
     const { stdout, stderr } = await connection.execCommand(command);
-
+  
     connection.dispose();
     if (stderr) {
       throw new Error(stderr);
     }
-
-    const jobs = stdout.trim().split("\n").map((line) => {
-      const [jobId, state] = line.split("|");
-      return { jobId, state };
+  
+    if (stdout.trim().length === 0) {
+      return { jobs: [] } as { jobs: { jobId: string; state: string }[] };
     }
-    );
-
+  
+    const jobs = stdout
+      .trim()
+      .split("\n")
+      .map((line) => {
+        const [jobId, jobState] = line.split("|");
+        if (!jobId || !jobState) {
+          return;
+        }
+        // the job state comes with a suffix that we don't need, so we split it and get the first part
+        return { jobId, state: jobState.split("_")[0] ?? jobState };
+      })
+      .filter(Boolean) as { jobId: string; state: string }[];
+  
     return { jobs };
   }),
 });
