@@ -116,7 +116,7 @@ export default function NewInstanceForm({
         </div>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex w-96 flex-col gap-4 rounded-lg border border-gray-200 p-8 shadow-lg"
+          className="flex w-96 flex-col gap-4 rounded-lg border border-gray-200 p-12 shadow-lg"
         >
           <FormField
             control={form.control}
@@ -146,7 +146,7 @@ export default function NewInstanceForm({
                     ))}
                   </SelectContent>
                 </Select>
-                <FormDescription>
+                <FormDescription className="sr-only">
                   Partition to run the instance on
                 </FormDescription>
                 <FormMessage>
@@ -182,7 +182,7 @@ export default function NewInstanceForm({
                     ))}
                   </SelectContent>
                 </Select>
-                <FormDescription>Number of GPUs to use</FormDescription>
+                <FormDescription className="sr-only">Number of GPUs to use</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -194,7 +194,7 @@ export default function NewInstanceForm({
               <FormItem>
                 <FormLabel>CPUs</FormLabel>
                 <Input {...field} type="number" />
-                <FormDescription>Number of CPUs to use</FormDescription>
+                <FormDescription className="sr-only">Number of CPUs to use</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
