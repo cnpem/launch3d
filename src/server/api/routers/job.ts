@@ -17,11 +17,17 @@ export const jobRouter = createTRPCRouter({
       const jobId = input.jobId;
       const username = ctx.session.user.name;
       if (!username) {
-        throw new Error("No user found");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "No user found",
+        });
       }
       const keys = getSSHKeys(username);
       if (!keys) {
-        throw new Error("No keys found for user");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "No keys found for user",
+        });
       }
       const connection = await ssh.connect({
         host: env.SSH_HOST,
@@ -64,11 +70,17 @@ export const jobRouter = createTRPCRouter({
       const jobId = input.jobId;
       const username = ctx.session.user.name;
       if (!username) {
-        throw new Error("No user found");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "No user found",
+        });
       }
       const keys = getSSHKeys(username);
       if (!keys) {
-        throw new Error("No keys found for user");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "No keys found for user",
+        });
       }
       const connection = await ssh.connect({
         host: env.SSH_HOST,
@@ -97,11 +109,17 @@ export const jobRouter = createTRPCRouter({
       const jobId = input.jobId;
       const username = ctx.session.user.name;
       if (!username) {
-        throw new Error("No user found");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "No user found",
+        });
       }
       const keys = getSSHKeys(username);
       if (!keys) {
-        throw new Error("No keys found for user");
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "No keys found for user",
+        });
       }
       const connection = await ssh.connect({
         host: env.SSH_HOST,
@@ -208,11 +226,17 @@ export const jobRouter = createTRPCRouter({
   userRecentJobs: protectedProcedure.query(async ({ ctx }) => {
     const username = ctx.session.user.name;
     if (!username) {
-      throw new Error("No user found");
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "No user found",
+      });
     }
     const keys = getSSHKeys(username);
     if (!keys) {
-      throw new Error("No keys found for user");
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "No keys found for user",
+      });
     }
     const connection = await ssh.connect({
       host: env.SSH_HOST,
