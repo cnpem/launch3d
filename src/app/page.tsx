@@ -4,7 +4,7 @@ import { getServerAuthSession } from "~/server/auth";
 import { buttonVariants } from "~/app/_components/ui/button";
 import { MoveUpRightIcon } from "lucide-react";
 import { SignOutButton } from "./_components/signout-button";
-import { api } from "~/trpc/server";
+import { RecentJobs } from "./_components/recent-jobs";
 
 export default async function Home() {
   const session = await getServerAuthSession();
@@ -44,35 +44,10 @@ export default async function Home() {
                 </Link>
               )}
             </div>
-            {session && <RecentJobLinks />}
+            {session && <RecentJobs />}
           </div>
         </div>
       </div>
     </main>
-  );
-}
-
-async function RecentJobLinks() {
-  const { jobs } = await api.job.userRecentJobs();
-
-  if (jobs.length === 0) return null;
-
-  return (
-    <div className="mt-12 flex flex-col items-center gap-4 ">
-      <h2 className="text-xl font-semibold">Recent Jobs</h2>
-      <ul className="flex flex-col gap-2">
-        {jobs.map(({ jobId, state }) => (
-          <li key={jobId}>
-            <Link
-              href={`/instances?jobId=${jobId}`}
-              className={buttonVariants({ variant: "link" })}
-            >
-              {`${jobId} (${state})`}
-              <MoveUpRightIcon className="ml-2 h-4 w-4" />
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
   );
 }
