@@ -23,6 +23,7 @@ import Logs from "./logs";
 
 import { Button } from "~/app/_components/ui/button";
 import { buttonVariants } from "~/app/_components/ui/button";
+import { useKeysError } from "../_hooks/use-keys-error";
 
 export default function View() {
   const [jobId, setJobId] = useQueryState("jobId", { defaultValue: "" });
@@ -67,6 +68,8 @@ function InstanceView({
       enabled: !!jobId,
     },
   );
+
+  useKeysError({ isError: report.isError, error: report.error });
 
   const cancel = api.job.cancel.useMutation({
     onSuccess: async () => {

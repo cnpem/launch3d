@@ -27,6 +27,7 @@ import { cn } from "~/lib/utils";
 import { buttonVariants } from "~/app/_components/ui/button";
 import { jobGPUOptions, maxCPUs } from "~/lib/constants";
 import { MoveLeftIcon } from "lucide-react";
+import { useKeysError } from "../_hooks/use-keys-error";
 
 export default function NewInstanceForm({
   setJobId,
@@ -36,6 +37,8 @@ export default function NewInstanceForm({
   const utils = api.useUtils();
 
   const partitionOptions = api.job.partitionOptions.useQuery();
+
+  useKeysError({ isError: partitionOptions.isError, error: partitionOptions.error });
 
   const formSchema = z
     .object({
