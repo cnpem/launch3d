@@ -1,28 +1,18 @@
 import { z } from "zod";
 
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
-
+import { createTRPCRouter, protectedProcedureWithCredentials } from "~/server/api/trpc";
+import { TRPCError } from "@trpc/server";
 import { ssh } from "~/server/ssh";
 import { env } from "~/env";
-import { getSSHKeys } from "~/server/ssh/utils";
 
 export const sshRouter = createTRPCRouter({
-  ls: protectedProcedure
+  ls: protectedProcedureWithCredentials
     .input(z.object({ path: z.string() }))
     .query(async ({ input, ctx }) => {
-      const name = ctx.session.user.name;
-      if (!name) {
-        throw new Error("No user found");
-      }
-      const keys = getSSHKeys(name);
-      if (!keys) {
-        throw new Error("No keys found for user");
-      }
-
       const connection = await ssh.connect({
         host: env.SSH_HOST,
-        username: name,
-        privateKey: keys.privateKey,
+        username: ctx.session.credentials.name,
+        privateKey: ctx.session.credentials.keys.privateKey,
         passphrase: env.SSH_PASSPHRASE,
       });
 
@@ -30,27 +20,21 @@ export const sshRouter = createTRPCRouter({
       const { stdout, stderr } = await connection.execCommand(command);
 
       if (stderr) {
-        throw new Error(stderr);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: stderr,
+        });
       }
 
       return stdout;
     }),
-  cat: protectedProcedure
+  cat: protectedProcedureWithCredentials
     .input(z.object({ path: z.string() }))
     .query(async ({ input, ctx }) => {
-      const name = ctx.session.user.name;
-      if (!name) {
-        throw new Error("No user found");
-      }
-      const keys = getSSHKeys(name);
-      if (!keys) {
-        throw new Error("No keys found for user");
-      }
-
       const connection = await ssh.connect({
         host: env.SSH_HOST,
-        username: name,
-        privateKey: keys.privateKey,
+        username: ctx.session.credentials.name,
+        privateKey: ctx.session.credentials.keys.privateKey,
         passphrase: env.SSH_PASSPHRASE,
       });
 
@@ -58,27 +42,21 @@ export const sshRouter = createTRPCRouter({
       const { stdout, stderr } = await connection.execCommand(command);
 
       if (stderr) {
-        throw new Error(stderr);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: stderr,
+        });
       }
 
       return stdout;
     }),
-  head: protectedProcedure
+  head: protectedProcedureWithCredentials
     .input(z.object({ path: z.string(), lines: z.number().optional() }))
     .query(async ({ input, ctx }) => {
-      const name = ctx.session.user.name;
-      if (!name) {
-        throw new Error("No user found");
-      }
-      const keys = getSSHKeys(name);
-      if (!keys) {
-        throw new Error("No keys found for user");
-      }
-
       const connection = await ssh.connect({
         host: env.SSH_HOST,
-        username: name,
-        privateKey: keys.privateKey,
+        username: ctx.session.credentials.name,
+        privateKey: ctx.session.credentials.keys.privateKey,
         passphrase: env.SSH_PASSPHRASE,
       });
 
@@ -86,27 +64,21 @@ export const sshRouter = createTRPCRouter({
       const { stdout, stderr } = await connection.execCommand(command);
 
       if (stderr) {
-        throw new Error(stderr);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: stderr,
+        });
       }
 
       return stdout;
     }),
-  rm: protectedProcedure
+  rm: protectedProcedureWithCredentials
     .input(z.object({ path: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const name = ctx.session.user.name;
-      if (!name) {
-        throw new Error("No user found");
-      }
-      const keys = getSSHKeys(name);
-      if (!keys) {
-        throw new Error("No keys found for user");
-      }
-
       const connection = await ssh.connect({
         host: env.SSH_HOST,
-        username: name,
-        privateKey: keys.privateKey,
+        username: ctx.session.credentials.name,
+        privateKey: ctx.session.credentials.keys.privateKey,
         passphrase: env.SSH_PASSPHRASE,
       });
 
@@ -114,7 +86,10 @@ export const sshRouter = createTRPCRouter({
       const { stdout, stderr } = await connection.execCommand(command);
 
       if (stderr) {
-        throw new Error(stderr);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: stderr,
+        });
       }
 
       return stdout;
