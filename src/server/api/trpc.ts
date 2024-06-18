@@ -13,6 +13,7 @@ import { ZodError } from "zod";
 
 import { getServerAuthSession } from "~/server/auth";
 
+import { getSSHKeys } from "~/server/ssh/utils";
 /**
  * 1. CONTEXT
  *
@@ -104,3 +105,31 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
     },
   });
 });
+
+export const protectedProcedureWithCredentials = t.procedure.use(
+  ({ ctx, next }) => {
+    if (!ctx.session || !ctx.session.user) {
+      throw new TRPCError({ code: "UNAUTHORIZED" });
+    }
+    const username = ctx.session.user.name;
+    if (!username) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "No user found",
+      });
+    }
+    const keys = getSSHKeys(username);
+    if (!keys) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "No keys found",
+      });
+    }
+    return next({
+      ctx: {
+        // infers the `session` as non-nullable
+        session: { ...ctx.session, credentials: { name: username, keys } },
+      },
+    });
+  },
+);
