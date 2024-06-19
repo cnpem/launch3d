@@ -13,10 +13,10 @@ export default async function Home() {
     <main className="flex min-h-screen flex-col items-center justify-center">
       <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
         <h1 className="text-4xl font-extrabold tracking-tight sm:text-[5rem]">
-          Launch <span className="text-[hsl(280,100%,70%)]">3D</span>
+          Annotat <span className="text-[hsl(280,100%,70%)]">3D</span>
         </h1>
         <p className="text-center text-2xl text-slate-400">
-          Launcher for Annotat3D instances.
+          Web launcher for the Annotat3D tool as a job in the SIRIUS cluster.
         </p>
         <div className="flex flex-col items-center gap-2">
           <div className="flex flex-col items-center justify-center gap-4">
