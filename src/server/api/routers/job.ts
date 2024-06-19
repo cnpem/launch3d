@@ -1,13 +1,91 @@
 import { z } from "zod";
-import { createTRPCRouter, protectedProcedure } from "~/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedureWithCredentials,
+} from "~/server/api/trpc";
 import { ssh } from "~/server/ssh";
-import { getSSHKeys } from "~/server/ssh/utils";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
 import { jobName } from "~/lib/constants";
+import {
+  type StepStatus,
+  type InstanceSteps,
+  type JobStates,
+} from "~/lib/types";
+
+const errorStates: JobStates[] = [
+  "SUSPENDED",
+  "FAILED",
+  "TIMEOUT",
+  "NODE_FAIL",
+  "PREEMPTED",
+  "BOOT_FAIL",
+  "OOM",
+] as const;
+
+const finishStates: JobStates[] = ["COMPLETE", "CANCELLED", "DEADLINE"];
+
+// from the query format State,Submit,Start,End,Elapsed,Partition,NodeList,AllocGRES,NCPUS,Reason,ExitCode
+const reportSacctFormatSchema = z.object({
+  state: z.string(),
+  submit: z.string().optional(),
+  start: z.string().optional(),
+  end: z.string().optional(),
+  elapsed: z.string().optional(),
+  partition: z.string().optional(),
+  nodeList: z.string().optional(),
+  allocGRES: z.string().optional(),
+  nCPUS: z.string().optional(),
+  reason: z.string().optional(),
+  exitCode: z.string().optional(),
+});
+
+function checkInstanceSteps(
+  report: z.infer<typeof reportSacctFormatSchema>,
+): InstanceSteps {
+  const steps: InstanceSteps = {
+    submit: checkSubmitStatus(report),
+    start: checkStartStatus(report),
+    finish: checkFinishStatus(report),
+  };
+  return steps;
+}
+
+function checkSubmitStatus(
+  report: z.infer<typeof reportSacctFormatSchema>,
+): StepStatus {
+  if (!!report.submit || report.state === "PENDING") {
+    return "success";
+  }
+  return "error";
+}
+
+function checkStartStatus(
+  report: z.infer<typeof reportSacctFormatSchema>,
+): StepStatus {
+  if (report.start) {
+    if (errorStates.includes(report.state as JobStates)) {
+      return "error";
+    } else {
+      return "success";
+    }
+  }
+  return "unknown";
+}
+
+function checkFinishStatus(
+  report: z.infer<typeof reportSacctFormatSchema>,
+): StepStatus {
+  if (report.end) {
+    return finishStates.includes(report.state as JobStates)
+      ? "success"
+      : "error";
+  }
+  return "unknown";
+}
 
 export const jobRouter = createTRPCRouter({
-  status: protectedProcedure
+  status: protectedProcedureWithCredentials
     .input(
       z.object({
         jobId: z.string(),
@@ -15,24 +93,10 @@ export const jobRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const jobId = input.jobId;
-      const username = ctx.session.user.name;
-      if (!username) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "No user found",
-        });
-      }
-      const keys = getSSHKeys(username);
-      if (!keys) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "No keys found for user",
-        });
-      }
       const connection = await ssh.connect({
         host: env.SSH_HOST,
-        username: username,
-        privateKey: keys.privateKey,
+        username: ctx.session.credentials.name,
+        privateKey: ctx.session.credentials.keys.privateKey,
         passphrase: env.SSH_PASSPHRASE,
       });
 
@@ -60,7 +124,7 @@ export const jobRouter = createTRPCRouter({
       }
       return { jobStatus: status };
     }),
-  cancel: protectedProcedure
+  cancel: protectedProcedureWithCredentials
     .input(
       z.object({
         jobId: z.string(),
@@ -68,24 +132,10 @@ export const jobRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const jobId = input.jobId;
-      const username = ctx.session.user.name;
-      if (!username) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "No user found",
-        });
-      }
-      const keys = getSSHKeys(username);
-      if (!keys) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "No keys found for user",
-        });
-      }
       const connection = await ssh.connect({
         host: env.SSH_HOST,
-        username: username,
-        privateKey: keys.privateKey,
+        username: ctx.session.credentials.name,
+        privateKey: ctx.session.credentials.keys.privateKey,
         passphrase: env.SSH_PASSPHRASE,
       });
 
@@ -99,7 +149,7 @@ export const jobRouter = createTRPCRouter({
 
       return { cancelStatus: "CANCELLED" };
     }),
-  report: protectedProcedure
+  report: protectedProcedureWithCredentials
     .input(
       z.object({
         jobId: z.string(),
@@ -107,24 +157,11 @@ export const jobRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const jobId = input.jobId;
-      const username = ctx.session.user.name;
-      if (!username) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "No user found",
-        });
-      }
-      const keys = getSSHKeys(username);
-      if (!keys) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "No keys found for user",
-        });
-      }
+
       const connection = await ssh.connect({
         host: env.SSH_HOST,
-        username: username,
-        privateKey: keys.privateKey,
+        username: ctx.session.credentials.name,
+        privateKey: ctx.session.credentials.keys.privateKey,
         passphrase: env.SSH_PASSPHRASE,
       });
 
@@ -132,6 +169,7 @@ export const jobRouter = createTRPCRouter({
       const { stdout, stderr } = await connection.execCommand(command);
 
       connection.dispose();
+
       if (stderr) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -139,12 +177,19 @@ export const jobRouter = createTRPCRouter({
         });
       }
 
-      // the results come in many lines, the first line is the header and the second is the actual data we want
       const data = stdout.trim();
       if (data.length === 0) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Job data not found",
+        });
+      }
+
+      const firstline = data.split("\n")[0];
+      if (!firstline) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: `Error parsing job data for jobId ${jobId}`,
         });
       }
 
@@ -162,9 +207,8 @@ export const jobRouter = createTRPCRouter({
         exitCode,
       ] = data.split("|");
 
-      // some of the fields have multiple values separated by new lines or spaces, generally we only want the first value
-      return {
-        state: state?.split(" ")[0] ?? state,
+      const report = reportSacctFormatSchema.safeParse({
+        state: state?.split(" ")[0] ?? state, // the state comes with a suffix that we don't need, so we split it and get the first part
         submit,
         start,
         end,
@@ -172,27 +216,29 @@ export const jobRouter = createTRPCRouter({
         partition,
         nodeList,
         allocGRES,
-        nCPUS: nCPUS,
-        reason: `${state}, exit code: ${exitCode}, reason: ${reason}`,
-      };
+        nCPUS,
+        reason,
+        exitCode,
+      });
+
+      if (report.error) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Error parsing job data:" + report.error.message,
+        });
+      }
+
+      return { ...report.data, steps: checkInstanceSteps(report.data) };
     }),
-  partitionOptions: protectedProcedure.query(async ({ ctx }) => {
-    const username = ctx.session.user.name;
-    if (!username) {
-      throw new Error("No user found");
-    }
-    const keys = getSSHKeys(username);
-    if (!keys) {
-      throw new Error("No keys found for user");
-    }
+  partitionOptions: protectedProcedureWithCredentials.query(async ({ ctx }) => {
     const connection = await ssh.connect({
       host: env.SSH_HOST,
-      username: username,
-      privateKey: keys.privateKey,
+      username: ctx.session.credentials.name,
+      privateKey: ctx.session.credentials.keys.privateKey,
       passphrase: env.SSH_PASSPHRASE,
     });
 
-    const command = `sinfo --format=%P --noheader && echo "###" && sacctmgr show association -P -r format=Partition Users=${username} --noheader`;
+    const command = `sinfo --format=%P --noheader && echo "###" && sacctmgr show association -P -r format=Partition Users=${ctx.session.credentials.name} --noheader`;
     const { stdout, stderr } = await connection.execCommand(command);
 
     connection.dispose();
@@ -223,40 +269,26 @@ export const jobRouter = createTRPCRouter({
 
     return { partitions: userPartitions };
   }),
-  userRecentJobs: protectedProcedure.query(async ({ ctx }) => {
-    const username = ctx.session.user.name;
-    if (!username) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "No user found",
-      });
-    }
-    const keys = getSSHKeys(username);
-    if (!keys) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "No keys found for user",
-      });
-    }
+  userRecentJobs: protectedProcedureWithCredentials.query(async ({ ctx }) => {
     const connection = await ssh.connect({
       host: env.SSH_HOST,
-      username: username,
-      privateKey: keys.privateKey,
+      username: ctx.session.credentials.name,
+      privateKey: ctx.session.credentials.keys.privateKey,
       passphrase: env.SSH_PASSPHRASE,
     });
-  
-    const command = `sacct --parsable2 --user ${username} --name ${jobName} --allocations --format=JobID,State --noheader`;
+
+    const command = `sacct --parsable2 --user ${ctx.session.credentials.name} --name ${jobName} --allocations --format=JobID,State --noheader`;
     const { stdout, stderr } = await connection.execCommand(command);
-  
+
     connection.dispose();
     if (stderr) {
       throw new Error(stderr);
     }
-  
+
     if (stdout.trim().length === 0) {
       return { jobs: [] } as { jobs: { jobId: string; state: string }[] };
     }
-  
+
     const jobs = stdout
       .trim()
       .split("\n")
@@ -269,7 +301,7 @@ export const jobRouter = createTRPCRouter({
         return { jobId, state: jobState.split("_")[0] ?? jobState };
       })
       .filter(Boolean) as { jobId: string; state: string }[];
-  
+
     return { jobs };
   }),
 });
