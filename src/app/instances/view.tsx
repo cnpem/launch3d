@@ -11,12 +11,12 @@ import {
   EllipsisIcon,
   MoveLeftIcon,
   TriangleAlertIcon,
+  ExternalLinkIcon,
 } from "lucide-react";
 
 import { api } from "~/trpc/react";
 
 import { cn } from "~/lib/utils";
-import { jobName } from "~/lib/constants";
 
 import NewInstanceForm from "./new";
 import Logs from "./logs";
@@ -24,6 +24,8 @@ import Logs from "./logs";
 import { Button } from "~/app/_components/ui/button";
 import { buttonVariants } from "~/app/_components/ui/button";
 import { useKeysError } from "../_hooks/use-keys-error";
+import { jobName } from "~/lib/constants";
+import { type StepStatus } from "~/lib/types";
 
 export default function View() {
   const [jobId, setJobId] = useQueryState("jobId", { defaultValue: "" });
@@ -42,18 +44,6 @@ export default function View() {
   return <InstanceView jobId={jobId} setJobId={onJobIdChange} />;
 }
 
-function getAnnotat3dWebUrl(rawTxt: string | undefined) {
-  if (!rawTxt || rawTxt === "") {
-    return undefined;
-  }
-  const urlKey = "Access Annotat3D-web instance in";
-  const url = rawTxt.match(new RegExp(`${urlKey}(.*)`))?.[1]?.trim();
-  if (!url || url === "") {
-    return undefined;
-  }
-  return url;
-}
-
 function InstanceView({
   jobId,
   setJobId,
@@ -62,30 +52,39 @@ function InstanceView({
   setJobId: (jobId: string | undefined) => void;
 }) {
   const utils = api.useUtils();
-  const report = api.job.report.useQuery(
-    { jobId },
+
+  const report = api.job.report.useQuery({ jobId });
+
+  const urlQuery = api.ssh.headGrep.useQuery(
     {
-      enabled: !!jobId,
+      path: `~/${jobName}-${jobId}.out`,
+      grep: "Access Annotat3D-web instance in",
+    },
+    {
+      enabled: !!report.data && report.data.state === "RUNNING",
     },
   );
 
-  useKeysError({ isError: report.isError, error: report.error });
+  function parseUrl(rawTxt: string | undefined) {
+    if (!rawTxt) {
+      return undefined;
+    }
+    const urlKey = "Access Annotat3D-web instance in";
+    const url = rawTxt.match(new RegExp(`${urlKey}(.*)`))?.[1]?.trim();
+    if (!url || url === "") {
+      return undefined;
+    }
+    return url;
+  }
 
   const cancel = api.job.cancel.useMutation({
     onSuccess: async () => {
       await utils.job.report.invalidate({ jobId });
+      await utils.ssh.headGrep.invalidate({
+        path: `~/${jobName}-${jobId}.out`,
+      });
     },
   });
-
-  const stdout = api.ssh.head.useQuery(
-    {
-      path: `~/${jobName}-${jobId}.out`,
-      lines: 25,
-    },
-    {
-      enabled: !!jobId && report.data?.state === "RUNNING",
-    },
-  );
 
   const clear = api.ssh.rm.useMutation({
     onSuccess: async () => {
@@ -100,17 +99,21 @@ function InstanceView({
     },
   });
 
-  const url = getAnnotat3dWebUrl(stdout.data);
+  useKeysError({ isError: report.isError, error: report.error });
 
   if (report.isError) {
     if (report.error?.data?.code === "NOT_FOUND") {
       notFound();
     }
-    return <div>Error: {report.error.message}</div>;
+    return <div>Error: {report.error?.message}</div>;
+  }
+
+  if (report.isLoading) {
+    return <div>Loading...</div>;
   }
 
   return (
-    <div className="my-auto flex h-full w-2/3 flex-row space-x-4">
+    <div className="my-auto flex h-full w-3/4 flex-row space-x-4">
       <div className="absolute right-0 top-0 m-4">
         <Link
           href="/"
@@ -123,21 +126,74 @@ function InstanceView({
           Home
         </Link>
       </div>
-      <div className="w-1/3">
-        <div className="mb-3 flex w-full flex-row items-center">
-          <h1 className="text-3xl font-extrabold tracking-tight">
-            Annotat<span className="text-[hsl(280,100%,70%)]">3D</span>
-          </h1>
+      <div className="w-1/4">
+        <div className="flex w-full flex-col items-start gap-2">
+          <Link
+            onClick={(e) => {
+              if (!parseUrl(urlQuery.data)) {
+                e.preventDefault();
+              }
+            }}
+            href={parseUrl(urlQuery.data) ?? {}}
+            className={cn(
+              buttonVariants({ variant: "link" }),
+              `${urlQuery.isLoading && "cursor-wait"}`,
+              `${urlQuery.isError && "cursor-not-allowed"}`,
+              `${!urlQuery.isError && !urlQuery.isLoading && !parseUrl(urlQuery.data) && "cursor-not-allowed"}`,
+              "px-0",
+            )}
+            rel="noreferrer noopener"
+            target="_blank"
+          >
+            <h1 className="flex flex-row text-3xl font-extrabold tracking-tight">
+              Annotat<span className="text-[hsl(280,100%,70%)]">3D</span>
+              <span>
+                <UrlIcon
+                  isLoading={urlQuery.isLoading}
+                  isError={urlQuery.isError}
+                  isUrl={!!parseUrl(urlQuery.data)}
+                />
+              </span>
+            </h1>
+          </Link>
+          {urlQuery.isLoading && (
+            <p className="text-wrap text-slate-400">Loading instance url...</p>
+          )}
+          {urlQuery.isError && (
+            <p className="text-wrap text-slate-400">{`Error loading instance url: ${urlQuery.error?.message}`}</p>
+          )}
+          {!urlQuery.isError &&
+            !urlQuery.isLoading &&
+            !parseUrl(urlQuery.data) && (
+              <p className="text-wrap text-slate-400">
+                {"Error parsing instance url from log file."}
+              </p>
+            )}
+          {parseUrl(urlQuery.data) && (
+            <p className="text-wrap text-slate-400">
+              Access your instance of Annotat3D in:
+              <a
+                href={parseUrl(urlQuery.data)}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="ml-1 text-blue-500 dark:text-blue-400"
+              >
+                {parseUrl(urlQuery.data)}
+              </a>
+            </p>
+          )}
         </div>
-        <div className="mt-10">
+        <div className="my-2">
           <ol className="relative border-s border-gray-200 text-gray-500 dark:border-gray-700 dark:text-gray-400">
             <li className="mb-10 ms-6">
-              <ErrorSuccessOrDefaultIcon
-                errorCondition={false}
-                successCondition={!!report.data?.submit}
-              />
+              <StatusIcon status={report.data?.steps.submit} />
               <h3 className="font-medium leading-tight">Submit</h3>
               <div className="text-sm">
+                {report.data?.steps.submit !== "success" && (
+                  <p className="text-red-500 dark:text-red-400">
+                    Job Status: {report.data?.state}
+                  </p>
+                )}
                 <p>Submit time: {report.data?.submit}</p>
                 <p>Partition: {report.data?.partition}</p>
                 <p>AllocGRES: {report.data?.allocGRES}</p>
@@ -146,106 +202,76 @@ function InstanceView({
               </div>
             </li>
             <li className="mb-10 ms-6">
-              <ErrorSuccessOrDefaultIcon
-                errorCondition={
-                  report.data?.state === "ERROR" ||
-                  report.data?.elapsed === "00:00:00"
-                }
-                successCondition={
-                  report.data?.state === "COMPLETED" ||
-                  report.data?.state === "CANCELLED"
-                }
-              />
+              <StatusIcon status={report.data?.steps.start} />
               <h3 className="font-medium leading-tight">Running</h3>
               <div className="text-sm">
                 <p>Start Time: {report.data?.start}</p>
                 <p>Elapsed: {report.data?.elapsed}</p>
-                <p>Link: {url}</p>
               </div>
             </li>
             <li className="mb-10 ms-6">
-              <ErrorSuccessOrDefaultIcon
-                errorCondition={report.data?.state === "ERROR"}
-                successCondition={
-                  report.data?.state === "COMPLETED" ||
-                  report.data?.state === "CANCELLED"
-                }
-              />
+              <StatusIcon status={report.data?.steps.finish} />
               <h3 className="font-medium leading-tight">Stop</h3>
               <div className="text-sm">
-                <p>State: {report.data?.reason}</p>
+                <p>State: {report.data?.state}</p>
+                <p>End Time: {report.data?.end}</p>
+                <p>Exit Code: {report.data?.exitCode}</p>
+                <p>Reason: {report.data?.reason}</p>
               </div>
             </li>
           </ol>
         </div>
-        {url && (
-          <p>
-            Access the Annotat3D-web instance in{" "}
-            <Link
-              href={url}
-              className="text-blue-500"
-              rel="noreferrer noopener"
-              target="_blank"
-            >
-              {url}
-            </Link>
-          </p>
-        )}
-        <div className="my-2 flex flex-row gap-2">
-          <div>
-            <Button
-              variant={"destructive"}
-              onClick={() => {
-                if (
-                  report.data?.state === "RUNNING" ||
-                  report.data?.state === "PENDING"
-                ) {
-                  cancel.mutate({ jobId });
-                } else {
-                  toast(
-                    <div className="flex flex-col gap-2">
-                      <p className="font-bold">Delete log files?</p>
-                      <div className="flex flex-row gap-1">
-                        <p>
-                          Do you also want to delete the log files from the
-                          remote server?
-                        </p>
-                        <Button
-                          variant={"destructive"}
-                          size={"sm"}
-                          onClick={() =>
-                            clear.mutate({
-                              path: `~/${jobName}-${jobId}.out ~/${jobName}-${jobId}.err`,
-                            })
-                          }
-                        >
-                          Yes
-                        </Button>
-                        <Button
-                          variant={"secondary"}
-                          size={"sm"}
-                          onClick={() => {
-                            setJobId(undefined);
-                            toast.dismiss();
-                          }}
-                        >
-                          No
-                        </Button>
-                      </div>
-                    </div>,
-                  );
-                }
-              }}
-            >
-              {report.data?.state === "RUNNING" ||
+        <Button
+          className="w-full"
+          variant={"destructive"}
+          onClick={() => {
+            if (
+              report.data?.state === "RUNNING" ||
               report.data?.state === "PENDING"
-                ? "Stop instance"
-                : "Clear dashboard"}
-            </Button>
-          </div>
-        </div>
+            ) {
+              cancel.mutate({ jobId });
+            } else {
+              toast(
+                <div className="flex flex-col gap-2">
+                  <p className="font-bold">Delete log files?</p>
+                  <div className="flex flex-row gap-1">
+                    <p>
+                      Do you also want to delete the log files from the remote
+                      server?
+                    </p>
+                    <Button
+                      variant={"destructive"}
+                      size={"sm"}
+                      onClick={() =>
+                        clear.mutate({
+                          path: `~/${jobName}-${jobId}.out ~/${jobName}-${jobId}.err`,
+                        })
+                      }
+                    >
+                      Yes
+                    </Button>
+                    <Button
+                      variant={"secondary"}
+                      size={"sm"}
+                      onClick={() => {
+                        setJobId(undefined);
+                        toast.dismiss();
+                      }}
+                    >
+                      No
+                    </Button>
+                  </div>
+                </div>,
+              );
+            }
+          }}
+        >
+          {report.data?.state === "RUNNING" || report.data?.state === "PENDING"
+            ? "Stop instance"
+            : "Clear dashboard"}
+        </Button>
       </div>
-      <div className="w-2/3">
+      <div className="w-3/4">
         <Logs jobId={jobId} />
       </div>
     </div>
@@ -291,18 +317,38 @@ function ErrorIcon({ className }: { className?: string }) {
   );
 }
 
-function ErrorSuccessOrDefaultIcon({
-  errorCondition,
-  successCondition,
-}: {
-  errorCondition: boolean;
-  successCondition: boolean;
-}) {
-  if (errorCondition) {
-    return <ErrorIcon />;
-  } else if (successCondition) {
-    return <CompleteIcon />;
-  } else {
-    return <WaitingIcon />;
+function StatusIcon({ status }: { status: StepStatus | undefined }) {
+  switch (status) {
+    case "success":
+      return <CompleteIcon />;
+    case "error":
+      return <ErrorIcon />;
+    default:
+      return <WaitingIcon />;
   }
+}
+
+function UrlIcon({
+  isLoading,
+  isError,
+  isUrl,
+}: {
+  isLoading: boolean;
+  isError: boolean;
+  isUrl: boolean;
+}) {
+  if (isLoading) {
+    return (
+      <EllipsisIcon className="mx-1 h-4 animate-pulse text-gray-500 dark:text-gray-400" />
+    );
+  }
+  if (isUrl) {
+    return <ExternalLinkIcon className="mx-1 h-4" />;
+  }
+  if (isError) {
+    console.error("URL ERROR");
+  }
+  return (
+    <TriangleAlertIcon className="mx-1 h-4 text-red-500 dark:text-red-400" />
+  );
 }
