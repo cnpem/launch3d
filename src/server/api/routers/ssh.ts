@@ -91,7 +91,7 @@ export const sshRouter = createTRPCRouter({
         passphrase: env.SSH_PASSPHRASE,
       });
 
-      const command = `head ${input.lines ? `-n ${input.lines}` : ""} ${input.path} | grep ${input.grep}`;
+      const command = `head ${input.lines ? `-n ${input.lines}` : ""} ${input.path} | grep "${input.grep}"`;
       const { stdout, stderr } = await connection.execCommand(command);
 
       if (stderr) {
