@@ -58,24 +58,12 @@ function InstanceView({
   const urlQuery = api.ssh.headGrep.useQuery(
     {
       path: `~/${jobName}-${jobId}.out`,
-      grep: "Access Annotat3D-web instance in",
+      grep: `-Eo 'http://${report.data?.nodeList}.lnls.br:([0-9]+)'`,
     },
     {
       enabled: !!report.data && report.data.state === "RUNNING",
     },
   );
-
-  function parseUrl(rawTxt: string | undefined) {
-    if (!rawTxt) {
-      return undefined;
-    }
-    const urlKey = "Access Annotat3D-web instance in";
-    const url = rawTxt.match(new RegExp(`${urlKey}(.*)`))?.[1]?.trim();
-    if (!url || url === "") {
-      return undefined;
-    }
-    return url;
-  }
 
   const cancel = api.job.cancel.useMutation({
     onSuccess: async () => {
@@ -108,8 +96,8 @@ function InstanceView({
     return <div>Error: {report.error?.message}</div>;
   }
 
-  if (report.isLoading) {
-    return <div>Loading...</div>;
+  if (urlQuery.isError) {
+    console.error('urlQuery FAILED:', urlQuery.error);
   }
 
   return (
@@ -130,16 +118,15 @@ function InstanceView({
         <div className="flex w-full flex-col items-start gap-2">
           <Link
             onClick={(e) => {
-              if (!parseUrl(urlQuery.data)) {
+              if (urlQuery.isLoading || urlQuery.isError) {
                 e.preventDefault();
               }
             }}
-            href={parseUrl(urlQuery.data) ?? {}}
+            href={urlQuery.data ?? {}}
             className={cn(
               buttonVariants({ variant: "link" }),
               `${urlQuery.isLoading && "cursor-wait"}`,
               `${urlQuery.isError && "cursor-not-allowed"}`,
-              `${!urlQuery.isError && !urlQuery.isLoading && !parseUrl(urlQuery.data) && "cursor-not-allowed"}`,
               "px-0",
             )}
             rel="noreferrer noopener"
@@ -151,7 +138,6 @@ function InstanceView({
                 <UrlIcon
                   isLoading={urlQuery.isLoading}
                   isError={urlQuery.isError}
-                  isUrl={!!parseUrl(urlQuery.data)}
                 />
               </span>
             </h1>
@@ -160,33 +146,26 @@ function InstanceView({
             <p className="text-wrap text-slate-400">Loading instance url...</p>
           )}
           {urlQuery.isError && (
-            <p className="text-wrap text-slate-400">{`Error loading instance url: ${urlQuery.error?.message}`}</p>
+            <p className="text-wrap text-slate-400">Error loading instance url.</p>
           )}
-          {!urlQuery.isError &&
-            !urlQuery.isLoading &&
-            !parseUrl(urlQuery.data) && (
-              <p className="text-wrap text-slate-400">
-                {"Error parsing instance url from log file."}
-              </p>
-            )}
-          {parseUrl(urlQuery.data) && (
-            <p className="text-wrap text-slate-400">
-              Access your instance of Annotat3D in:
+          {!!urlQuery.data && (
+            <div className="flex flex-col gap-1">
+              <p className="text-wrap text-slate-400">Instance running in:</p>
               <a
-                href={parseUrl(urlQuery.data)}
+                href={urlQuery.data}
                 target="_blank"
                 rel="noreferrer noopener"
-                className="ml-1 text-blue-500 dark:text-blue-400"
+                className="text-blue-500 dark:text-blue-400"
               >
-                {parseUrl(urlQuery.data)}
+                {urlQuery.data}
               </a>
-            </p>
+            </div>
           )}
         </div>
-        <div className="my-2">
+        <div className="my-4 pl-4" id="steps">
           <ol className="relative border-s border-gray-200 text-gray-500 dark:border-gray-700 dark:text-gray-400">
             <li className="mb-10 ms-6">
-              <StatusIcon status={report.data?.steps.submit} />
+              <StatusMarker status={report.data?.steps.submit} />
               <h3 className="font-medium leading-tight">Submit</h3>
               <div className="text-sm">
                 {report.data?.steps.submit !== "success" && (
@@ -202,15 +181,15 @@ function InstanceView({
               </div>
             </li>
             <li className="mb-10 ms-6">
-              <StatusIcon status={report.data?.steps.start} />
+              <StatusMarker status={report.data?.steps.start} />
               <h3 className="font-medium leading-tight">Running</h3>
               <div className="text-sm">
                 <p>Start Time: {report.data?.start}</p>
                 <p>Elapsed: {report.data?.elapsed}</p>
               </div>
             </li>
-            <li className="mb-10 ms-6">
-              <StatusIcon status={report.data?.steps.finish} />
+            <li className="ms-6">
+              <StatusMarker status={report.data?.steps.finish} />
               <h3 className="font-medium leading-tight">Stop</h3>
               <div className="text-sm">
                 <p>State: {report.data?.state}</p>
@@ -244,7 +223,7 @@ function InstanceView({
                       size={"sm"}
                       onClick={() =>
                         clear.mutate({
-                          path: `~/${jobName}-${jobId}.out ~/${jobName}-${jobId}.err`,
+                          path: `~ErrorStepMarker/${jobName}-${jobId}.out ~/${jobName}-${jobId}.err`,
                         })
                       }
                     >
@@ -278,7 +257,7 @@ function InstanceView({
   );
 }
 
-function CompleteIcon({ className }: { className?: string }) {
+function SucessMarker({ className }: { className?: string }) {
   return (
     <span
       className={cn(
@@ -291,7 +270,7 @@ function CompleteIcon({ className }: { className?: string }) {
   );
 }
 
-function WaitingIcon({ className }: { className?: string }) {
+function WaitingMarker({ className }: { className?: string }) {
   return (
     <span
       className={cn(
@@ -304,7 +283,7 @@ function WaitingIcon({ className }: { className?: string }) {
   );
 }
 
-function ErrorIcon({ className }: { className?: string }) {
+function ErrorMarker({ className }: { className?: string }) {
   return (
     <span
       className={cn(
@@ -317,38 +296,33 @@ function ErrorIcon({ className }: { className?: string }) {
   );
 }
 
-function StatusIcon({ status }: { status: StepStatus | undefined }) {
+function StatusMarker({ status }: { status: StepStatus | undefined }) {
   switch (status) {
     case "success":
-      return <CompleteIcon />;
+      return <SucessMarker />;
     case "error":
-      return <ErrorIcon />;
+      return <ErrorMarker />;
     default:
-      return <WaitingIcon />;
+      return <WaitingMarker />;
   }
 }
 
 function UrlIcon({
   isLoading,
   isError,
-  isUrl,
 }: {
   isLoading: boolean;
   isError: boolean;
-  isUrl: boolean;
 }) {
   if (isLoading) {
     return (
       <EllipsisIcon className="mx-1 h-4 animate-pulse text-gray-500 dark:text-gray-400" />
     );
   }
-  if (isUrl) {
-    return <ExternalLinkIcon className="mx-1 h-4" />;
-  }
   if (isError) {
-    console.error("URL ERROR");
+    return (
+      <TriangleAlertIcon className="mx-1 h-4 text-red-500 dark:text-red-400" />
+    );
   }
-  return (
-    <TriangleAlertIcon className="mx-1 h-4 text-red-500 dark:text-red-400" />
-  );
+  return <ExternalLinkIcon className="mx-1 h-4" />;
 }
