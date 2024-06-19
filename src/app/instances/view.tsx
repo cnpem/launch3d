@@ -97,7 +97,7 @@ function InstanceView({
   }
 
   if (urlQuery.isError) {
-    console.error('urlQuery FAILED:', urlQuery.error);
+    console.error("urlQuery FAILED:", urlQuery.error);
   }
 
   return (
@@ -118,7 +118,7 @@ function InstanceView({
         <div className="flex w-full flex-col items-start gap-2">
           <Link
             onClick={(e) => {
-              if (urlQuery.isLoading || urlQuery.isError) {
+              if (!urlQuery.data || urlQuery.isError || urlQuery.isPending) {
                 e.preventDefault();
               }
             }}
@@ -126,7 +126,7 @@ function InstanceView({
             className={cn(
               buttonVariants({ variant: "link" }),
               `${urlQuery.isLoading && "cursor-wait"}`,
-              `${urlQuery.isError && "cursor-not-allowed"}`,
+              `${(urlQuery.isError || urlQuery.isPending) && "cursor-not-allowed"}`,
               "px-0",
             )}
             rel="noreferrer noopener"
@@ -137,30 +137,17 @@ function InstanceView({
               <span>
                 <UrlIcon
                   isLoading={urlQuery.isLoading}
-                  isError={urlQuery.isError}
+                  isError={urlQuery.isError || urlQuery.isPending}
                 />
               </span>
             </h1>
           </Link>
-          {urlQuery.isLoading && (
-            <p className="text-wrap text-slate-400">Loading instance url...</p>
-          )}
-          {urlQuery.isError && (
-            <p className="text-wrap text-slate-400">Error loading instance url.</p>
-          )}
-          {!!urlQuery.data && (
-            <div className="flex flex-col gap-1">
-              <p className="text-wrap text-slate-400">Instance running in:</p>
-              <a
-                href={urlQuery.data}
-                target="_blank"
-                rel="noreferrer noopener"
-                className="text-blue-500 dark:text-blue-400"
-              >
-                {urlQuery.data}
-              </a>
-            </div>
-          )}
+          <RenderStatusMessage
+            isDisabled={urlQuery.isPending || report.data?.state !== "RUNNING"}
+            isError={urlQuery.isError}
+            isLoading={urlQuery.isLoading}
+            url={urlQuery.data}
+          />
         </div>
         <div className="my-4 pl-4" id="steps">
           <ol className="relative border-s border-gray-200 text-gray-500 dark:border-gray-700 dark:text-gray-400">
@@ -325,4 +312,39 @@ function UrlIcon({
     );
   }
   return <ExternalLinkIcon className="mx-1 h-4" />;
+}
+
+function RenderStatusMessage({
+  isDisabled,
+  isLoading,
+  isError,
+  url,
+}: {
+  isDisabled: boolean;
+  isLoading: boolean;
+  isError: boolean;
+  url: string | undefined;
+}) {
+  if (isDisabled)
+    return <p className="text-wrap text-slate-400">Instance is not running.</p>;
+  if (isLoading)
+    return <p className="text-wrap text-slate-400">Loading instance url...</p>;
+  if (isError)
+    return (
+      <p className="text-wrap text-slate-400">Error loading instance url.</p>
+    );
+
+  return (
+    <div className="flex flex-col gap-1">
+      <p className="text-wrap text-slate-400">Instance running in:</p>
+      <a
+        href={url}
+        target="_blank"
+        rel="noreferrer noopener"
+        className="text-blue-500 dark:text-blue-400"
+      >
+        {url}
+      </a>
+    </div>
+  );
 }

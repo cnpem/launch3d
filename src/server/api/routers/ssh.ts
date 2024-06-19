@@ -101,10 +101,10 @@ export const sshRouter = createTRPCRouter({
         });
       }
 
-      if (!stdout) {
+      if (!stdout || stdout.trim() === "") {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: `No matches found for ${input.grep}`,
+          message: `No matches found.`,
         });
       }
 
