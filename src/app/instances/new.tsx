@@ -74,7 +74,7 @@ export default function NewInstanceForm({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      cpus: 1,
+      cpus: 32,
     },
   });
 
