@@ -53,7 +53,12 @@ function InstanceView({
 }) {
   const utils = api.useUtils();
 
-  const report = api.job.report.useQuery({ jobId });
+  const report = api.job.report.useQuery(
+    { jobId },
+    {
+      refetchInterval: 5000,
+    },
+  );
 
   const urlQuery = api.ssh.headGrep.useQuery(
     {
@@ -118,7 +123,12 @@ function InstanceView({
         <div className="flex w-full flex-col items-start gap-2">
           <Link
             onClick={(e) => {
-              if (!urlQuery.data || urlQuery.isError || urlQuery.isPending) {
+              if (
+                !urlQuery.data ||
+                urlQuery.isError ||
+                urlQuery.isPending ||
+                report.data?.state !== "RUNNING"
+              ) {
                 e.preventDefault();
               }
             }}
@@ -126,7 +136,7 @@ function InstanceView({
             className={cn(
               buttonVariants({ variant: "link" }),
               `${urlQuery.isLoading && "cursor-wait"}`,
-              `${(urlQuery.isError || urlQuery.isPending) && "cursor-not-allowed"}`,
+              `${(urlQuery.isError || urlQuery.isPending || report.data?.state !== "RUNNING") && "cursor-not-allowed"}`,
               "px-0",
             )}
             rel="noreferrer noopener"
@@ -137,7 +147,11 @@ function InstanceView({
               <span>
                 <UrlIcon
                   isLoading={urlQuery.isLoading}
-                  isError={urlQuery.isError || urlQuery.isPending}
+                  isError={
+                    urlQuery.isError ||
+                    urlQuery.isPending ||
+                    report.data?.state !== "RUNNING"
+                  }
                 />
               </span>
             </h1>
