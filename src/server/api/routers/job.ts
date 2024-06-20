@@ -54,7 +54,7 @@ function checkInstanceSteps(
 function checkSubmitStatus(
   report: z.infer<typeof reportSacctFormatSchema>,
 ): StepStatus {
-  if (!!report.submit || report.state === "PENDING") {
+  if (report.submit !== 'Unknown' || report.state === "PENDING") {
     return "success";
   }
   return "error";
@@ -63,7 +63,7 @@ function checkSubmitStatus(
 function checkStartStatus(
   report: z.infer<typeof reportSacctFormatSchema>,
 ): StepStatus {
-  if (report.start) {
+  if (report.start !== "Unknown") {
     if (errorStates.includes(report.state as JobStates)) {
       return "error";
     } else {
@@ -76,7 +76,7 @@ function checkStartStatus(
 function checkFinishStatus(
   report: z.infer<typeof reportSacctFormatSchema>,
 ): StepStatus {
-  if (report.end) {
+  if (report.end !== "Unknown") {
     return finishStates.includes(report.state as JobStates)
       ? "success"
       : "error";
