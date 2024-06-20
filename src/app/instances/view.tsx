@@ -224,7 +224,7 @@ function InstanceView({
                       size={"sm"}
                       onClick={() =>
                         clear.mutate({
-                          path: `~ErrorStepMarker/${jobName}-${jobId}.out ~/${jobName}-${jobId}.err`,
+                          path: `~/${jobName}-${jobId}.out ~/${jobName}-${jobId}.err`,
                         })
                       }
                     >
