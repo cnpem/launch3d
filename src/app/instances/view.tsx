@@ -258,7 +258,7 @@ function InstanceView({
   );
 }
 
-function SucessMarker({ className }: { className?: string }) {
+function SuccessMarker({ className }: { className?: string }) {
   return (
     <span
       className={cn(
@@ -300,7 +300,7 @@ function ErrorMarker({ className }: { className?: string }) {
 function StatusMarker({ status }: { status: StepStatus | undefined }) {
   switch (status) {
     case "success":
-      return <SucessMarker />;
+      return <SuccessMarker />;
     case "error":
       return <ErrorMarker />;
     default:
