@@ -6,12 +6,14 @@ import {
 import { ssh } from "~/server/ssh";
 import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
+import fs from "fs/promises";
 import { jobName } from "~/lib/constants";
 import {
   type StepStatus,
   type InstanceSteps,
   type JobStates,
 } from "~/lib/types";
+import { userPartitionsResponseSchema } from "~/lib/schemas/user-partitions-response";
 
 const errorStates: JobStates[] = [
   "SUSPENDED",
@@ -54,7 +56,7 @@ function checkInstanceSteps(
 function checkSubmitStatus(
   report: z.infer<typeof reportSacctFormatSchema>,
 ): StepStatus {
-  if (report.submit !== 'Unknown' || report.state === "PENDING") {
+  if (report.submit !== "Unknown" || report.state === "PENDING") {
     return "success";
   }
   return "error";
@@ -165,7 +167,7 @@ export const jobRouter = createTRPCRouter({
         passphrase: env.SSH_PASSPHRASE,
       });
 
-      const command = `sacct --format="State,Submit,Start,End,Elapsed,Partition,NodeList,AllocGRES,NCPUS,Reason,ExitCode" --parsable2 --job ${jobId} --noheader`;
+      const command = `sacct --format="State,Submit,Start,End,Elapsed,Partition,NodeList,AllocGRES,NCPUS,Reason,ExitCode,name" --parsable2 --job ${jobId} --noheader`;
       const { stdout, stderr } = await connection.execCommand(command);
 
       connection.dispose();
@@ -192,6 +194,7 @@ export const jobRouter = createTRPCRouter({
           message: `Error parsing job data for jobId ${jobId}`,
         });
       }
+      const supername = "oi";
 
       const [
         state,
@@ -228,7 +231,11 @@ export const jobRouter = createTRPCRouter({
         });
       }
 
-      return { ...report.data, steps: checkInstanceSteps(report.data) };
+      return {
+        ...report.data,
+        steps: checkInstanceSteps(report.data),
+        supername,
+      };
     }),
   partitionOptions: protectedProcedureWithCredentials.query(async ({ ctx }) => {
     const connection = await ssh.connect({
@@ -268,6 +275,79 @@ export const jobRouter = createTRPCRouter({
     }
 
     return { partitions: userPartitions };
+  }),
+  userPartitions: protectedProcedureWithCredentials.query(async ({ ctx }) => {
+    const connection = await ssh.connect({
+      host: env.SSH_HOST,
+      username: ctx.session.credentials.name,
+      privateKey: ctx.session.credentials.keys.privateKey,
+      passphrase: env.SSH_PASSPHRASE,
+    });
+
+    const templatePath = "public/templates/user-partitions.sh";
+    const scriptTemplate = await fs.readFile(templatePath, "utf-8");
+
+    const content = scriptTemplate.replace(
+      "${INPUT_USERNAME}",
+      ctx.session.credentials.name,
+    );
+
+    const { stdout, stderr } = await connection.execCommand(content);
+
+    connection.dispose();
+    if (stderr) {
+      throw new Error(stderr);
+    }
+
+    if (stdout.trim().length === 0) {
+      throw new Error("Empty response from user partitions script.");
+    }
+
+    const parsed = userPartitionsResponseSchema.safeParse(
+      JSON.parse(stdout.trim()),
+    );
+    if (parsed.error) {
+      throw new Error(parsed.error.message);
+    }
+
+    function parseNumberOrUndefined(value: string | null | undefined) {
+      if (value === null || value === undefined) {
+        return undefined;
+      }
+      if (value === "null") {
+        return undefined;
+      }
+      const parsed = parseInt(value, 10);
+      if (isNaN(parsed)) {
+        return undefined;
+      }
+      return parsed;
+    }
+
+    const partitions = parsed.data.partitions.map((partition) => {
+      // if the groupQoSLimit is set for a limit it overrides the partition limit from cpusState and total gpus from gresTotal
+      const maxGpus = parseNumberOrUndefined(partition.groupQoSLimit?.gpu) ?? parseNumberOrUndefined(partition.gresTotal) ?? 0;
+      const maxCpus = parseNumberOrUndefined(partition.groupQoSLimit?.cpu) ?? parseNumberOrUndefined(partition.cpusState.total) ?? 0;
+      const usedCpus = parseNumberOrUndefined(partition.cpusState.allocated) ?? 0;
+      const usedGpus = parseNumberOrUndefined(partition.gresUsed) ?? 0;
+      const freeCpus = maxCpus > 0 ? maxCpus - usedCpus: 0;
+      const freeGpus = maxGpus > 0 ? maxGpus - usedGpus: 0;
+
+      return {
+        partition: partition.partitionName,
+        nodeList: partition.nodeList,
+        cpus: {
+          free: freeCpus,
+          max: maxCpus,
+        },
+        gpus: {
+          free: freeGpus,
+          max: maxGpus,
+        },
+      };
+    });
+
+    return { partitions };
   }),
   userRecentJobs: protectedProcedureWithCredentials.query(async ({ ctx }) => {
     const connection = await ssh.connect({
