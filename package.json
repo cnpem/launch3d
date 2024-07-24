@@ -8,6 +8,7 @@
     "dev": "next dev",
     "lint": "next lint",
     "format": "prettier --check \"**/*.{cjs,mjs,js,jsx,ts,tsx,md,json}\"",
+    "format:fix": "prettier --write \"**/*.{cjs,mjs,js,jsx,ts,tsx,md,json}\"",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .next node_modules",
     "start": "next start"
