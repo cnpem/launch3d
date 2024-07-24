@@ -36,11 +36,11 @@ export default function NewInstanceForm({
 }) {
   const utils = api.useUtils();
 
-  const partitionOptions = api.job.userPartitions.useQuery();
+  const userPartitions = api.job.userPartitions.useQuery();
 
   useKeysError({
-    isError: partitionOptions.isError,
-    error: partitionOptions.error,
+    isError: userPartitions.isError,
+    error: userPartitions.error,
   });
 
   const formSchema = z
@@ -54,7 +54,7 @@ export default function NewInstanceForm({
         .max(maxCPUs, `Max CPUs is ${maxCPUs}`),
     })
     .superRefine(({ partition }, ctx) => {
-      if (partitionOptions.error) {
+      if (userPartitions.error) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
           message: "Loading...",
@@ -63,8 +63,8 @@ export default function NewInstanceForm({
         return z.NEVER;
       }
       if (
-        partitionOptions.data &&
-        !partitionOptions.data.partitions.some((p) => p.partition === partition)
+        userPartitions.data &&
+        !userPartitions.data.partitions.some((p) => p.partition === partition)
       ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -135,9 +135,7 @@ export default function NewInstanceForm({
                   onValueChange={(value) => {
                     field.onChange(value);
                   }}
-                  disabled={
-                    partitionOptions.isError || partitionOptions.isLoading
-                  }
+                  disabled={userPartitions.isError || userPartitions.isLoading}
                 >
                   <FormControl>
                     <SelectTrigger>
@@ -145,7 +143,7 @@ export default function NewInstanceForm({
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {partitionOptions.data?.partitions.map((option) => (
+                    {userPartitions.data?.partitions.map((option) => (
                       <SelectItem
                         key={option.partition}
                         value={option.partition}
@@ -172,9 +170,9 @@ export default function NewInstanceForm({
                   Partition to run the instance on
                 </FormDescription>
                 <FormMessage>
-                  {partitionOptions.isError &&
-                    `Error loading partitions: ${partitionOptions.error.message}`}
-                  {partitionOptions.isLoading && `Searching user partitions...`}
+                  {userPartitions.isError &&
+                    `Error loading partitions: ${userPartitions.error.message}`}
+                  {userPartitions.isLoading && `Searching user partitions...`}
                 </FormMessage>
               </FormItem>
             )}
