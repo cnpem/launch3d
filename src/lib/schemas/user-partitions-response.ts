@@ -8,9 +8,9 @@ const cpusStateSchema = z.object({
 });
 
 const groupQoSLimitSchema = z.object({
-  cpu: z.union([z.string(), z.null()]).optional(),
-  gpu: z.union([z.string(), z.null()]).optional(),
-  mem: z.union([z.string(), z.null()]).optional(),
+  cpu: z.string().optional(),
+  gpu: z.string().optional(),
+  mem: z.string().optional(),
 });
 
 const partitionSchema = z.object({

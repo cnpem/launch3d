@@ -310,16 +310,6 @@ export const jobRouter = createTRPCRouter({
       throw new Error(parsed.error.message);
     }
 
-    function parseNullOrUndefined(value: string | null | undefined) {
-      if (value === null || value === undefined) {
-        return undefined;
-      }
-      if (value === "null") {
-        return undefined;
-      }
-      return value;
-    }
-
     function parseNumberOrUndefined(value: string | null | undefined) {
       if (value === null || value === undefined) {
         return undefined;
@@ -327,7 +317,11 @@ export const jobRouter = createTRPCRouter({
       if (value === "null") {
         return undefined;
       }
-      return parseInt(value, 10);
+      const parsed = parseInt(value, 10);
+      if (isNaN(parsed)) {
+        return undefined;
+      }
+      return parsed;
     }
 
     const partitions = parsed.data.partitions.map((partition) => {
@@ -391,5 +385,3 @@ export const jobRouter = createTRPCRouter({
     return { jobs };
   }),
 });
-
-// echo $(sacctmgr show association -P -r format=Partition Users=bruno.carlos --noheader) | tr ' ' '|'
