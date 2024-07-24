@@ -10,7 +10,6 @@ export default async function SignIn({
   searchParams,
 }: {
   searchParams: { callbackUrl: string };
-
 }) {
   const session = await getServerAuthSession();
   if (!!session) {

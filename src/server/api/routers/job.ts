@@ -326,12 +326,19 @@ export const jobRouter = createTRPCRouter({
 
     const partitions = parsed.data.partitions.map((partition) => {
       // if the groupQoSLimit is set for a limit it overrides the partition limit from cpusState and total gpus from gresTotal
-      const maxGpus = parseNumberOrUndefined(partition.groupQoSLimit?.gpu) ?? parseNumberOrUndefined(partition.gresTotal) ?? 0;
-      const maxCpus = parseNumberOrUndefined(partition.groupQoSLimit?.cpu) ?? parseNumberOrUndefined(partition.cpusState.total) ?? 0;
-      const usedCpus = parseNumberOrUndefined(partition.cpusState.allocated) ?? 0;
+      const maxGpus =
+        parseNumberOrUndefined(partition.groupQoSLimit?.gpu) ??
+        parseNumberOrUndefined(partition.gresTotal) ??
+        0;
+      const maxCpus =
+        parseNumberOrUndefined(partition.groupQoSLimit?.cpu) ??
+        parseNumberOrUndefined(partition.cpusState.total) ??
+        0;
+      const usedCpus =
+        parseNumberOrUndefined(partition.cpusState.allocated) ?? 0;
       const usedGpus = parseNumberOrUndefined(partition.gresUsed) ?? 0;
-      const freeCpus = maxCpus > 0 ? maxCpus - usedCpus: 0;
-      const freeGpus = maxGpus > 0 ? maxGpus - usedGpus: 0;
+      const freeCpus = maxCpus > 0 ? maxCpus - usedCpus : 0;
+      const freeGpus = maxGpus > 0 ? maxGpus - usedGpus : 0;
 
       return {
         partition: partition.partitionName,

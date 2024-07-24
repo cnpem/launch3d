@@ -42,19 +42,19 @@ export const annotat3dRouter = createTRPCRouter({
         passphrase: env.SSH_PASSPHRASE,
       });
 
-      const templatePath = 'public/templates/annotat3d-sbatch.sh';
-      const scriptTemplate = await fs.readFile(templatePath, 'utf-8');
+      const templatePath = "public/templates/annotat3d-sbatch.sh";
+      const scriptTemplate = await fs.readFile(templatePath, "utf-8");
 
       const content = scriptTemplate
-        .replace('${INPUT_PARTITION}', input.partition)
-        .replace('${INPUT_CPUS}', input.cpus.toString())
-        .replace('${INPUT_GPUS}', input.gpus)
-        .replace('${ENV_ANNOTAT3D_JOB_NAME}', jobName)
-        .replace('${ENV_ANNOTAT3D_LOG_OUT}', `${jobLogName}.out`)
-        .replace('${ENV_ANNOTAT3D_LOG_ERR}', `${jobLogName}.err`)
-        .replace('${ENV_ANNOTAT3D_IMAGE_PATH}', env.ANNOTAT3D_IMAGE_PATH)
-        .replace('${ENV_ANNOTAT3D_PORT_RANGE0}', env.ANNOTAT3D_PORT_RANGE0)
-        .replace('${ENV_ANNOTAT3D_PORT_RANGE1}', env.ANNOTAT3D_PORT_RANGE1);
+        .replace("${INPUT_PARTITION}", input.partition)
+        .replace("${INPUT_CPUS}", input.cpus.toString())
+        .replace("${INPUT_GPUS}", input.gpus)
+        .replace("${ENV_ANNOTAT3D_JOB_NAME}", jobName)
+        .replace("${ENV_ANNOTAT3D_LOG_OUT}", `${jobLogName}.out`)
+        .replace("${ENV_ANNOTAT3D_LOG_ERR}", `${jobLogName}.err`)
+        .replace("${ENV_ANNOTAT3D_IMAGE_PATH}", env.ANNOTAT3D_IMAGE_PATH)
+        .replace("${ENV_ANNOTAT3D_PORT_RANGE0}", env.ANNOTAT3D_PORT_RANGE0)
+        .replace("${ENV_ANNOTAT3D_PORT_RANGE1}", env.ANNOTAT3D_PORT_RANGE1);
 
       const { tmpDir, scriptPath } = await createTmpScript(content);
       const scriptName = `${jobName}.sbatch`;
