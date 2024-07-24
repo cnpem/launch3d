@@ -36,14 +36,17 @@ export default function NewInstanceForm({
 }) {
   const utils = api.useUtils();
 
-  const partitionOptions = api.job.partitionOptions.useQuery();
+  const partitionOptions = api.job.userPartitions.useQuery();
 
-  useKeysError({ isError: partitionOptions.isError, error: partitionOptions.error });
+  useKeysError({
+    isError: partitionOptions.isError,
+    error: partitionOptions.error,
+  });
 
   const formSchema = z
     .object({
       partition: z.string(),
-      gpus: z.coerce.string().refine((value) => jobGPUOptions.includes(value)),
+      gpus: z.coerce.string(),
       cpus: z.coerce
         .number()
         .int()
@@ -61,7 +64,7 @@ export default function NewInstanceForm({
       }
       if (
         partitionOptions.data &&
-        !partitionOptions.data.partitions.includes(partition)
+        !partitionOptions.data.partitions.some((p) => p.partition === partition)
       ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -143,8 +146,24 @@ export default function NewInstanceForm({
                   </FormControl>
                   <SelectContent>
                     {partitionOptions.data?.partitions.map((option) => (
-                      <SelectItem key={option} value={option}>
-                        {option}
+                      <SelectItem
+                        key={option.partition}
+                        value={option.partition}
+                        className="!text-justify"
+                      >
+                        <span className="mr-2 font-bold">
+                          {option.partition}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          <span className="text-sm text-green-500">
+                            {option.cpus.free}
+                          </span>
+                          /{option.cpus.max} cpus,{" "}
+                          <span className="text-sm text-green-500">
+                            {option.gpus.free}
+                          </span>
+                          /{option.gpus.max} gpus
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -185,7 +204,9 @@ export default function NewInstanceForm({
                     ))}
                   </SelectContent>
                 </Select>
-                <FormDescription className="sr-only">Number of GPUs to use</FormDescription>
+                <FormDescription className="sr-only">
+                  Number of GPUs to use
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -197,7 +218,9 @@ export default function NewInstanceForm({
               <FormItem>
                 <FormLabel>CPUs</FormLabel>
                 <Input {...field} type="number" />
-                <FormDescription className="sr-only">Number of CPUs to use</FormDescription>
+                <FormDescription className="sr-only">
+                  Number of CPUs to use
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
