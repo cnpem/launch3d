@@ -1,0 +1,28 @@
+name: CI
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["*"]
+jobs:
+    lint:
+        runs-on: ubuntu-latest
+        name: Run ESLint
+        steps:
+        - uses: actions/checkout@v4
+        - name: Lint
+          run: pnpm lint
+    format:
+        runs-on: ubuntu-latest
+        name: Run Prettier
+        steps:
+        - uses: actions/checkout@v4
+        - name: Format Check
+          run: pnpm format
+    typecheck:
+        runs-on: ubuntu-latest
+        name: Run TypeScript
+        steps:
+        - uses: actions/checkout@v4
+        - name: Typecheck
+          run: pnpm typecheck
