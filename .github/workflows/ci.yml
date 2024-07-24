@@ -10,6 +10,11 @@ jobs:
         name: Run ESLint
         steps:
         - uses: actions/checkout@v4
+        - uses: pnpm/action-setup@v4
+        - uses: actions/setup-node@v4
+          with:
+              node-version: 20
+              cache: "pnpm"
         - name: Lint
           run: pnpm lint
     format:
@@ -17,6 +22,11 @@ jobs:
         name: Run Prettier
         steps:
         - uses: actions/checkout@v4
+        - uses: pnpm/action-setup@v4
+        - uses: actions/setup-node@v4
+          with:
+              node-version: 20
+              cache: "pnpm"
         - name: Format Check
           run: pnpm format
     typecheck:
@@ -24,5 +34,10 @@ jobs:
         name: Run TypeScript
         steps:
         - uses: actions/checkout@v4
+        - uses: pnpm/action-setup@v4
+        - uses: actions/setup-node@v4
+          with:
+              node-version: 20
+              cache: "pnpm"
         - name: Typecheck
           run: pnpm typecheck
