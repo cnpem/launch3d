@@ -1,8 +1,5 @@
 #!/bin/bash
 # This script lists the user's available nodes in the cluster and their load using the SLURM CLI.
-# expected output as a list of objects in JSON format with the fields as in the following example:
-# { partitionName=tepui1, qos=N/A, nodeList=harriet, cpusState={allocated=256 idle=0 other=0 total=256}, gresTotal=gpu:8, gresUsed=gpu:8, groupQoSLimit={} }
-# { partitionName=tepui2, qos=tepui2, nodeList=nise, cpusState={allocated=112 idle=144 other=0 total=256}, gresTotal=gpu:8, gresUsed=gpu:3, groupQoSLimit={cpu=128,gres:gpu=4,mem=512G} }
 
 # Function to list all partitions QoS limits
 list_partitions_qos_limits() {
