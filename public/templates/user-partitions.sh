@@ -1,6 +1,23 @@
 #!/bin/bash
 # This script lists the user's available nodes in the cluster and their load using the SLURM CLI.
 
+# Function to print an error message and exit
+error_exit() {
+    local error_message=$1
+    echo "Error: $error_message"
+    exit 1
+}
+
+# Function to check if the user exists
+check_user_is_registered() {
+    local username=$1
+    local user_in_sacctmgr
+    user_in_sacctmgr=$(sacctmgr show user "$username" --noheader)
+    if [ -z "$user_in_sacctmgr" ]; then
+        error_exit "User $username does not exist."
+    fi
+}
+
 # Function to list all partitions QoS limits
 list_partitions_qos_limits() {
     sacctmgr -P -r show qos format=Name,GrpTRES --noheader || error_exit "Failed to get partitions qos limits."
@@ -236,6 +253,7 @@ main() {
         echo "Missing username argument."
         exit 1
     fi
+    check_user_is_registered "$username"
 
     combine_partition_data "$username"
     exit 0
