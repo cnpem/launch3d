@@ -14,6 +14,7 @@ import { ZodError } from "zod";
 import { getServerAuthSession } from "~/server/auth";
 
 import { getSSHKeys } from "~/server/ssh/utils";
+import { MISSING_SSH_KEYS_ERROR } from "~/lib/constants";
 /**
  * 1. CONTEXT
  *
@@ -122,7 +123,7 @@ export const protectedProcedureWithCredentials = t.procedure.use(
     if (!keys) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: "No keys found",
+        message: MISSING_SSH_KEYS_ERROR,
       });
     }
     return next({
