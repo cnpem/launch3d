@@ -167,7 +167,7 @@ export const jobRouter = createTRPCRouter({
         passphrase: env.SSH_PASSPHRASE,
       });
 
-      const command = `sacct --format="State,Submit,Start,End,Elapsed,Partition,NodeList,AllocGRES,NCPUS,Reason,ExitCode,name" --parsable2 --job ${jobId} --noheader`;
+      const command = `sacct --format="State,Submit,Start,End,Elapsed,Partition,NodeList,AllocGRES,NCPUS,Reason,ExitCode" --parsable2 --job ${jobId} --noheader`;
       const { stdout, stderr } = await connection.execCommand(command);
 
       connection.dispose();
@@ -194,7 +194,6 @@ export const jobRouter = createTRPCRouter({
           message: `Error parsing job data for jobId ${jobId}`,
         });
       }
-      const supername = "oi";
 
       const [
         state,
@@ -234,48 +233,8 @@ export const jobRouter = createTRPCRouter({
       return {
         ...report.data,
         steps: checkInstanceSteps(report.data),
-        supername,
       };
     }),
-  partitionOptions: protectedProcedureWithCredentials.query(async ({ ctx }) => {
-    const connection = await ssh.connect({
-      host: env.SSH_HOST,
-      username: ctx.session.credentials.name,
-      privateKey: ctx.session.credentials.keys.privateKey,
-      passphrase: env.SSH_PASSPHRASE,
-    });
-
-    const command = `sinfo --format=%P --noheader && echo "###" && sacctmgr show association -P -r format=Partition Users=${ctx.session.credentials.name} --noheader`;
-    const { stdout, stderr } = await connection.execCommand(command);
-
-    connection.dispose();
-    if (stderr) {
-      throw new Error(stderr);
-    }
-
-    // the result is two lists separated by a ### string,
-    // the first list is a list of all the partitions available in the cluster
-    // the second list is a list of all the specific partitions available for that user
-    // if the second list has an empty line, the user can submit jobs for all the partitions of the cluster
-    const [clusterStr, userStr] = stdout.trim().split("###\n");
-
-    const clusterPartitions = clusterStr?.split("\n");
-    const userPartitions = userStr?.split("\n");
-
-    if (!clusterPartitions) {
-      throw new Error(
-        "Cannot find available partitions of the cluster with sinfo.",
-      );
-    }
-
-    if (!userPartitions) {
-      return {
-        partitions: clusterPartitions,
-      };
-    }
-
-    return { partitions: userPartitions };
-  }),
   userPartitions: protectedProcedureWithCredentials.query(async ({ ctx }) => {
     const connection = await ssh.connect({
       host: env.SSH_HOST,
