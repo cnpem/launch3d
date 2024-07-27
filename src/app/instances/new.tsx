@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import Link from "next/link";
+import { HoverCardTrigger } from "@radix-ui/react-hover-card";
 import {
   Form,
   FormControl,
@@ -22,12 +23,15 @@ import {
   SelectValue,
 } from "~/app/_components/ui/select";
 import { Input } from "~/app/_components/ui/input";
-import { Button } from "~/app/_components/ui/button";
+import { Button, buttonVariants } from "~/app/_components/ui/button";
+import { HoverCard, HoverCardContent } from "~/app/_components/ui/hover-card";
 import { cn } from "~/lib/utils";
-import { buttonVariants } from "~/app/_components/ui/button";
 import { jobGPUOptions, maxCPUs } from "~/lib/constants";
-import { MoveLeftIcon } from "lucide-react";
+import { ImageIcon, ImagePlusIcon, MoveLeftIcon } from "lucide-react";
 import { useKeysError } from "../_hooks/use-keys-error";
+import { NautilusDialog } from "~/app/_components/nautilus";
+import { Label } from "../_components/ui/label";
+import { imagePathSchema, annotationPathSchema } from "~/lib/schemas/input-files";
 
 export default function NewInstanceForm({
   setJobId,
@@ -45,6 +49,11 @@ export default function NewInstanceForm({
 
   const formSchema = z
     .object({
+      // input paths for images, labels, superpixels, and annotations
+      imagePath: imagePathSchema,
+      labelPath: imagePathSchema.optional(),
+      superpixelPath: imagePathSchema.optional(),
+      annotationPath: annotationPathSchema.optional(),
       partition: z.string(),
       gpus: z.coerce.string(),
       cpus: z.coerce
@@ -124,6 +133,178 @@ export default function NewInstanceForm({
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex w-96 flex-col gap-4 rounded-lg border border-gray-200 p-12 shadow-lg"
         >
+          <Label htmlFor="images-and-annotations">Images and Annotations</Label>
+          <div className="rounded-lg border border-dashed border-gray-200 p-2">
+            <div
+              id="iimages-and-annotations"
+              className="grid w-full grid-flow-col grid-cols-2 grid-rows-2 items-center gap-2"
+            >
+              <FormField
+                control={form.control}
+                name={"imagePath"}
+                render={({ field }) => (
+                  <FormItem>
+                    <HoverCard>
+                      <NautilusDialog
+                        onSelect={(path) => field.onChange(path)}
+                        trigger={
+                          <HoverCardTrigger asChild>
+                            <Button
+                              className="w-32 gap-1 data-[img=true]:border-violet-600 data-[img=true]:dark:border-violet-400"
+                              data-img={!!field.value}
+                              variant={"outline"}
+                            >
+                              {!!field.value ? (
+                                <ImageIcon className="h-4 w-4" />
+                              ) : (
+                                <ImagePlusIcon className="h-4 w-4" />
+                              )}
+                              Image
+                            </Button>
+                          </HoverCardTrigger>
+                        }
+                      />
+                      <HoverCardContent className="w-fit">
+                        <div className="flex flex-col gap-2">
+                          <h4 className="text-sm font-semibold">@image</h4>
+                          <p className="text-xs font-medium text-violet-600 dark:text-violet-400">
+                            {field.value?.split("/").slice(-1)[0] ?? ""}
+                          </p>
+                          <span className="text-xs text-muted-foreground">
+                            {field.value}
+                          </span>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={"labelPath"}
+                render={({ field }) => (
+                  <FormItem>
+                    <HoverCard>
+                      <NautilusDialog
+                        onSelect={(path) => field.onChange(path)}
+                        trigger={
+                          <HoverCardTrigger asChild>
+                            <Button
+                              className="w-32 gap-1 data-[img=true]:border-violet-600 data-[img=true]:dark:border-violet-400"
+                              data-img={!!field.value}
+                              variant={"outline"}
+                            >
+                              {!!field.value ? (
+                                <ImageIcon className="h-4 w-4" />
+                              ) : (
+                                <ImagePlusIcon className="h-4 w-4" />
+                              )}
+                              Label
+                            </Button>
+                          </HoverCardTrigger>
+                        }
+                      />
+                      <HoverCardContent className="w-fit">
+                        <div className="flex flex-col gap-2">
+                          <h4 className="text-sm font-semibold">@label</h4>
+                          <p className="text-xs font-medium text-violet-600 dark:text-violet-400">
+                            {field.value?.split("/").slice(-1)[0] ?? ""}
+                          </p>
+                          <span className="text-xs text-muted-foreground">
+                            {field.value}
+                          </span>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={"superpixelPath"}
+                render={({ field }) => (
+                  <FormItem>
+                    <HoverCard>
+                      <NautilusDialog
+                        onSelect={(path) => field.onChange(path)}
+                        trigger={
+                          <HoverCardTrigger asChild>
+                            <Button
+                              className="w-32 gap-1 data-[img=true]:border-violet-600 data-[img=true]:dark:border-violet-400"
+                              data-img={!!field.value}
+                              variant={"outline"}
+                            >
+                              {!!field.value ? (
+                                <ImageIcon className="h-4 w-4" />
+                              ) : (
+                                <ImagePlusIcon className="h-4 w-4" />
+                              )}
+                              Superpixel
+                            </Button>
+                          </HoverCardTrigger>
+                        }
+                      />
+                      <HoverCardContent className="w-fit">
+                        <div className="flex flex-col gap-2">
+                          <h4 className="text-sm font-semibold">@superpixel</h4>
+                          <p className="text-xs font-medium text-violet-600 dark:text-violet-400">
+                            {field.value?.split("/").slice(-1)[0] ?? ""}
+                          </p>
+                          <span className="text-xs text-muted-foreground">
+                            {field.value}
+                          </span>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={"annotationPath"}
+                render={({ field }) => (
+                  <FormItem>
+                    <HoverCard>
+                      <NautilusDialog
+                        onSelect={(path) => field.onChange(path)}
+                        trigger={
+                          <HoverCardTrigger asChild>
+                            <Button
+                              className="w-32 gap-1 data-[img=true]:border-violet-600 data-[img=true]:dark:border-violet-400"
+                              data-img={!!field.value}
+                              variant={"outline"}
+                            >
+                              {!!field.value ? (
+                                <ImageIcon className="h-4 w-4" />
+                              ) : (
+                                <ImagePlusIcon className="h-4 w-4" />
+                              )}
+                              Annotation
+                            </Button>
+                          </HoverCardTrigger>
+                        }
+                      />
+                      <HoverCardContent className="w-fit">
+                        <div className="flex flex-col gap-2">
+                          <h4 className="text-sm font-semibold">@annotation</h4>
+                          <p className="text-xs font-medium text-violet-600 dark:text-violet-400">
+                            {field.value?.split("/").slice(-1)[0] ?? ""}
+                          </p>
+                          <span className="text-xs text-muted-foreground">
+                            {field.value}
+                          </span>
+                        </div>
+                      </HoverCardContent>
+                    </HoverCard>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+            </div>
+          </div>
           <FormField
             control={form.control}
             name="partition"
