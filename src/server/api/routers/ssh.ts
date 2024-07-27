@@ -7,6 +7,7 @@ import {
 import { TRPCError } from "@trpc/server";
 import { ssh } from "~/server/ssh";
 import { env } from "~/env";
+import { sshLsSchema } from "~/lib/schemas/ssh-ls";
 
 export const sshRouter = createTRPCRouter({
   ls: protectedProcedureWithCredentials
@@ -19,17 +20,39 @@ export const sshRouter = createTRPCRouter({
         passphrase: env.SSH_PASSPHRASE,
       });
 
-      const command = `ls ${input.path}`;
+      const command = `ls -pm --group-directories-first ${input.path}`;
       const { stdout, stderr } = await connection.execCommand(command);
 
+      console.log(stdout, stderr);
+
       if (stderr) {
+        const error = z
+          .object({
+            status: z.string(),
+            message: z.string(),
+          })
+          .safeParse(JSON.parse(stderr));
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: stderr,
+          message: error.success ? error.data.message : stderr,
         });
       }
 
-      return stdout;
+      const list = sshLsSchema.safeParse(stdout.split(","));
+      if (!list.success) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: list.error.message,
+        });
+      }
+      const files = list.data.map((file) => {
+        return {
+          name: file.trim(),
+          type: file.endsWith("/") ? "directory" : "file",
+        };
+      });
+      return { files };
     }),
   cat: protectedProcedureWithCredentials
     .input(z.object({ path: z.string() }))
