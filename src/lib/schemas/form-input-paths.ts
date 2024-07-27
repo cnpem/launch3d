@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+export const validImageExtensions = ["tif", "tiff", "TIFF", "hdf5", "h5", "raw", "b"] as const;
+export const validAnnotationExtensions = ["pkl"] as const;
+
 export const imagePathSchema = z
   .string()
   .min(2, { message: "Must be a valid image name!" })
@@ -20,3 +23,4 @@ export const outputDirSchema = z
   .regex(/\/$/, {
     message: "Must be a valid workspace directory!",
   });
+

@@ -27,11 +27,23 @@ import { Button, buttonVariants } from "~/app/_components/ui/button";
 import { HoverCard, HoverCardContent } from "~/app/_components/ui/hover-card";
 import { cn } from "~/lib/utils";
 import { jobGPUOptions, maxCPUs } from "~/lib/constants";
-import { ImageIcon, ImagePlusIcon, MoveLeftIcon } from "lucide-react";
+import {
+  FolderIcon,
+  FolderSearchIcon,
+  ImageIcon,
+  ImagePlusIcon,
+  MoveLeftIcon,
+} from "lucide-react";
 import { useKeysError } from "../_hooks/use-keys-error";
 import { NautilusDialog } from "~/app/_components/nautilus";
 import { Label } from "../_components/ui/label";
-import { imagePathSchema, annotationPathSchema } from "~/lib/schemas/form-input-paths";
+import {
+  imagePathSchema,
+  annotationPathSchema,
+  outputDirSchema,
+  validImageExtensions,
+  validAnnotationExtensions,
+} from "~/lib/schemas/form-input-paths";
 
 export default function NewInstanceForm({
   setJobId,
@@ -54,6 +66,8 @@ export default function NewInstanceForm({
       labelPath: imagePathSchema.optional(),
       superpixelPath: imagePathSchema.optional(),
       annotationPath: annotationPathSchema.optional(),
+      // output directory for saving results
+      outputDir: outputDirSchema,
       partition: z.string(),
       gpus: z.coerce.string(),
       cpus: z.coerce
@@ -136,8 +150,8 @@ export default function NewInstanceForm({
           <Label htmlFor="images-and-annotations">Images and Annotations</Label>
           <div className="rounded-lg border border-dashed border-gray-200 p-2">
             <div
-              id="iimages-and-annotations"
-              className="grid w-full grid-flow-col grid-cols-2 grid-rows-2 items-center gap-2"
+              id="images-and-annotations"
+              className="grid w-full grid-flow-row grid-cols-2 grid-rows-2 items-center gap-2"
             >
               <FormField
                 control={form.control}
@@ -164,17 +178,11 @@ export default function NewInstanceForm({
                           </HoverCardTrigger>
                         }
                       />
-                      <HoverCardContent className="w-fit">
-                        <div className="flex flex-col gap-2">
-                          <h4 className="text-sm font-semibold">@image</h4>
-                          <p className="text-xs font-medium text-violet-600 dark:text-violet-400">
-                            {field.value?.split("/").slice(-1)[0] ?? ""}
-                          </p>
-                          <span className="text-xs text-muted-foreground">
-                            {field.value}
-                          </span>
-                        </div>
-                      </HoverCardContent>
+                      <NautilusHoverCardContent
+                        selectedPath={field.value}
+                        fieldName="image"
+                        fieldDescription={`Select image file with the following extensions: ${validImageExtensions.join(", ")}`}
+                      />
                     </HoverCard>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -205,17 +213,11 @@ export default function NewInstanceForm({
                           </HoverCardTrigger>
                         }
                       />
-                      <HoverCardContent className="w-fit">
-                        <div className="flex flex-col gap-2">
-                          <h4 className="text-sm font-semibold">@label</h4>
-                          <p className="text-xs font-medium text-violet-600 dark:text-violet-400">
-                            {field.value?.split("/").slice(-1)[0] ?? ""}
-                          </p>
-                          <span className="text-xs text-muted-foreground">
-                            {field.value}
-                          </span>
-                        </div>
-                      </HoverCardContent>
+                      <NautilusHoverCardContent
+                        selectedPath={field.value}
+                        fieldName="label"
+                        fieldDescription={`Select label file with the following extensions: ${validImageExtensions.join(", ")}`}
+                      />
                     </HoverCard>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -246,17 +248,11 @@ export default function NewInstanceForm({
                           </HoverCardTrigger>
                         }
                       />
-                      <HoverCardContent className="w-fit">
-                        <div className="flex flex-col gap-2">
-                          <h4 className="text-sm font-semibold">@superpixel</h4>
-                          <p className="text-xs font-medium text-violet-600 dark:text-violet-400">
-                            {field.value?.split("/").slice(-1)[0] ?? ""}
-                          </p>
-                          <span className="text-xs text-muted-foreground">
-                            {field.value}
-                          </span>
-                        </div>
-                      </HoverCardContent>
+                      <NautilusHoverCardContent
+                        selectedPath={field.value}
+                        fieldName="superpixel"
+                        fieldDescription={`Select superpixel file with the following extensions: ${validImageExtensions.join(", ")}`}
+                      />
                     </HoverCard>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -287,17 +283,11 @@ export default function NewInstanceForm({
                           </HoverCardTrigger>
                         }
                       />
-                      <HoverCardContent className="w-fit">
-                        <div className="flex flex-col gap-2">
-                          <h4 className="text-sm font-semibold">@annotation</h4>
-                          <p className="text-xs font-medium text-violet-600 dark:text-violet-400">
-                            {field.value?.split("/").slice(-1)[0] ?? ""}
-                          </p>
-                          <span className="text-xs text-muted-foreground">
-                            {field.value}
-                          </span>
-                        </div>
-                      </HoverCardContent>
+                      <NautilusHoverCardContent
+                        selectedPath={field.value}
+                        fieldName="annotation"
+                        fieldDescription={`Select annotation file with the following extensions: ${validAnnotationExtensions.join(", ")}`}
+                      />
                     </HoverCard>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -305,6 +295,42 @@ export default function NewInstanceForm({
               />
             </div>
           </div>
+          <Label htmlFor="output-dir">Output Directory</Label>
+          <FormField
+            control={form.control}
+            name={"outputDir"}
+            render={({ field }) => (
+              <FormItem>
+                <HoverCard>
+                  <NautilusDialog
+                    onSelect={(path) => field.onChange(path)}
+                    trigger={
+                      <HoverCardTrigger asChild>
+                        <Button
+                          className="w-full gap-1 data-[img=true]:border-violet-600 data-[img=true]:dark:border-violet-400"
+                          data-img={!!field.value}
+                          variant={"outline"}
+                        >
+                          {!!field.value ? (
+                            <FolderIcon className="h-4 w-4" />
+                          ) : (
+                            <FolderSearchIcon className="h-4 w-4" />
+                          )}
+                          Output Directory
+                        </Button>
+                      </HoverCardTrigger>
+                    }
+                  />
+                  <NautilusHoverCardContent
+                    selectedPath={field.value}
+                    fieldName="output"
+                    fieldDescription="Select output directory"
+                  />
+                </HoverCard>
+                <FormMessage className="text-xs" />
+              </FormItem>
+            )}
+          />
           <FormField
             control={form.control}
             name="partition"
@@ -417,5 +443,36 @@ export default function NewInstanceForm({
         </form>
       </Form>
     </>
+  );
+}
+
+function NautilusHoverCardContent({
+  selectedPath,
+  fieldName,
+  fieldDescription,
+}: {
+  selectedPath: string | undefined;
+  fieldName: string;
+  fieldDescription: string;
+}) {
+  if (!selectedPath)
+    return (
+      <HoverCardContent className="w-fit">
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-muted-foreground">{fieldDescription}</p>
+        </div>
+      </HoverCardContent>
+    );
+
+  return (
+    <HoverCardContent className="w-fit">
+      <div className="flex flex-col gap-2">
+        <h4 className="text-sm font-semibold">@{fieldName}</h4>
+        <p className="text-xs font-medium text-violet-600 dark:text-violet-400">
+          {selectedPath?.split("/").slice(-1)[0] ?? ""}
+        </p>
+        <span className="text-xs text-muted-foreground">{selectedPath}</span>
+      </div>
+    </HoverCardContent>
   );
 }
