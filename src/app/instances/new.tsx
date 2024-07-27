@@ -31,7 +31,7 @@ import { ImageIcon, ImagePlusIcon, MoveLeftIcon } from "lucide-react";
 import { useKeysError } from "../_hooks/use-keys-error";
 import { NautilusDialog } from "~/app/_components/nautilus";
 import { Label } from "../_components/ui/label";
-import { imagePathSchema, annotationPathSchema } from "~/lib/schemas/input-files";
+import { imagePathSchema, annotationPathSchema } from "~/lib/schemas/form-input-paths";
 
 export default function NewInstanceForm({
   setJobId,

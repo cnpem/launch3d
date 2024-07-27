@@ -13,3 +13,10 @@ export const annotationPathSchema = z
   .regex(/^.*\.(pkl)$/, {
     message: "Must be a valid annotation extension!",
   });
+
+export const outputDirSchema = z
+  .string()
+  .min(2, { message: "Must be a valid workspace directory!" })
+  .regex(/\/$/, {
+    message: "Must be a valid workspace directory!",
+  });
