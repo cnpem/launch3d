@@ -7,6 +7,11 @@ import fs from "fs/promises";
 import path from "path";
 import os from "os";
 import { jobName, jobLogName } from "~/lib/constants";
+import {
+  imagePathSchema,
+  annotationPathSchema,
+  outputDirSchema,
+} from "~/lib/schemas/form-input-paths";
 
 async function createTmpScript(content: string) {
   const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), "annotat3d-"));
@@ -20,6 +25,13 @@ export const annotat3dRouter = createTRPCRouter({
   start: protectedProcedure
     .input(
       z.object({
+      // input paths for images, labels, superpixels, and annotations
+      imagePath: imagePathSchema,
+      labelPath: imagePathSchema.optional(),
+      superpixelPath: imagePathSchema.optional(),
+      annotationPath: annotationPathSchema.optional(),
+      // output directory for saving results
+      outputDir: outputDirSchema,
         partition: z.string(),
         gpus: z.string(),
         cpus: z.coerce.number(),
@@ -46,13 +58,18 @@ export const annotat3dRouter = createTRPCRouter({
       const scriptTemplate = await fs.readFile(templatePath, "utf-8");
 
       const content = scriptTemplate
+        .replace("${INPUT_IMAGE_PATH}", input.imagePath)
+        .replace("${INPUT_LABEL_PATH}", input.labelPath ?? "")
+        .replace("${INPUT_ANNOTATION_PATH}", input.annotationPath ?? "")
+        .replace("${INPUT_SUPERPIXEL_PATH}", input.superpixelPath ?? "")
+        .replace("${INPUT_OUTPUT_PATH}", input.outputDir)
         .replace("${INPUT_PARTITION}", input.partition)
         .replace("${INPUT_CPUS}", input.cpus.toString())
         .replace("${INPUT_GPUS}", input.gpus)
         .replace("${ENV_ANNOTAT3D_JOB_NAME}", jobName)
         .replace("${ENV_ANNOTAT3D_LOG_OUT}", `${jobLogName}.out`)
         .replace("${ENV_ANNOTAT3D_LOG_ERR}", `${jobLogName}.err`)
-        .replace("${ENV_ANNOTAT3D_IMAGE_PATH}", env.ANNOTAT3D_IMAGE_PATH)
+        .replace("${ENV_ANNOTAT3D_CONTAINER_PATH}", env.ANNOTAT3D_CONTAINER_PATH)
         .replace("${ENV_ANNOTAT3D_PORT_RANGE0}", env.ANNOTAT3D_PORT_RANGE0)
         .replace("${ENV_ANNOTAT3D_PORT_RANGE1}", env.ANNOTAT3D_PORT_RANGE1);
 
