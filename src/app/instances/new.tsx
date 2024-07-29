@@ -459,7 +459,7 @@ function NautilusHoverCardContent({
     return (
       <HoverCardContent className="w-fit">
         <div className="flex flex-col gap-2">
-          <p className="text-sm text-muted-foreground">{fieldDescription}</p>
+          <p className="text-xs text-muted-foreground">{fieldDescription}</p>
         </div>
       </HoverCardContent>
     );
