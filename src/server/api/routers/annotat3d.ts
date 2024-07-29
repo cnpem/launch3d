@@ -25,13 +25,11 @@ export const annotat3dRouter = createTRPCRouter({
   start: protectedProcedure
     .input(
       z.object({
-      // input paths for images, labels, superpixels, and annotations
-      imagePath: imagePathSchema,
-      labelPath: imagePathSchema.optional(),
-      superpixelPath: imagePathSchema.optional(),
-      annotationPath: annotationPathSchema.optional(),
-      // output directory for saving results
-      outputDir: outputDirSchema,
+        imagePath: imagePathSchema,
+        labelPath: imagePathSchema.optional(),
+        superpixelPath: imagePathSchema.optional(),
+        annotationPath: annotationPathSchema.optional(),
+        outputDir: outputDirSchema,
         partition: z.string(),
         gpus: z.string(),
         cpus: z.coerce.number(),
@@ -69,7 +67,10 @@ export const annotat3dRouter = createTRPCRouter({
         .replace("${ENV_ANNOTAT3D_JOB_NAME}", jobName)
         .replace("${ENV_ANNOTAT3D_LOG_OUT}", `${jobLogName}.out`)
         .replace("${ENV_ANNOTAT3D_LOG_ERR}", `${jobLogName}.err`)
-        .replace("${ENV_ANNOTAT3D_CONTAINER_PATH}", env.ANNOTAT3D_CONTAINER_PATH)
+        .replace(
+          "${ENV_ANNOTAT3D_CONTAINER_PATH}",
+          env.ANNOTAT3D_CONTAINER_PATH,
+        )
         .replace("${ENV_ANNOTAT3D_PORT_RANGE0}", env.ANNOTAT3D_PORT_RANGE0)
         .replace("${ENV_ANNOTAT3D_PORT_RANGE1}", env.ANNOTAT3D_PORT_RANGE1);
 

@@ -22,7 +22,7 @@ export const imagePathSchema = z
       );
     },
     {
-      message: `Image file must be one of the following types: ${validImageExtensions.join(', ')}`,
+      message: `Image file must be one of the following types: ${validImageExtensions.join(", ")}`,
     },
   );
 
