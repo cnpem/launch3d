@@ -106,7 +106,7 @@ export default function NewInstanceForm({
 
   const createInstance = api.annotat3d.start.useMutation({
     onSuccess: async ({ jobId }) => {
-      toast.success("Instance started successfully");
+      toast.success("Job submitted");
       setJobId(jobId);
       form.reset();
       await utils.job.userRecentJobs.invalidate();
