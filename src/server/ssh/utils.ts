@@ -2,6 +2,7 @@ import { promisify } from "util";
 import { ssh } from ".";
 import { env } from "~/env";
 import { exec } from "child_process";
+import { MISSING_SSH_KEYS_ERROR } from "~/lib/constants";
 import fs from "fs/promises";
 
 const createDb = () => {
@@ -80,7 +81,7 @@ export async function copyPublicKeyToServer(
   const publicKey = keys?.publicKey;
 
   if (!publicKey) {
-    throw new Error("No key found for user");
+    throw new Error(MISSING_SSH_KEYS_ERROR);
   }
 
   const connection = await ssh.connect({
