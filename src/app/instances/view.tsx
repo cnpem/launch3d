@@ -57,7 +57,9 @@ function InstanceView({
     { jobId },
     {
       refetchInterval: (q) =>
-        q.state.data?.state === "RUNNING" ? 1000 * 60 * 2 : false,
+        q.state.data?.state === "PENDING" || q.state.data?.state === "RUNNING"
+          ? 1000 * 60 * 2
+          : false,
     },
   );
 
