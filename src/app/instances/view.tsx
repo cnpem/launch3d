@@ -56,7 +56,10 @@ function InstanceView({
   const report = api.job.report.useQuery(
     { jobId },
     {
-      refetchInterval: 5000,
+      refetchInterval: (q) =>
+        q.state.data?.state === "PENDING" || q.state.data?.state === "RUNNING"
+          ? 1000 * 60 * 2
+          : false,
     },
   );
 
