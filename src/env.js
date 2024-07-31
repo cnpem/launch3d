@@ -26,7 +26,7 @@ export const env = createEnv({
     SSH_HOST: z.string(),
     SSH_PASSPHRASE: z.string().optional(),
     SSH_KEYS_PATH: z.string(),
-    ANNOTAT3D_IMAGE_PATH: z.string(),
+    ANNOTAT3D_CONTAINER_PATH: z.string(),
     ANNOTAT3D_PORT_RANGE0: z.string(),
     ANNOTAT3D_PORT_RANGE1: z.string(),
   },
@@ -40,6 +40,7 @@ export const env = createEnv({
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
     NEXT_PUBLIC_SLURM_GPU_OPTIONS: z.string(),
     NEXT_PUBLIC_SLURM_MAX_CPUS: z.string(),
+    NEXT_PUBLIC_STORAGE_PATH: z.string(),
   },
 
   /**
@@ -55,11 +56,12 @@ export const env = createEnv({
     SSH_HOST: process.env.SSH_HOST,
     SSH_PASSPHRASE: process.env.SSH_PASSPHRASE,
     SSH_KEYS_PATH: process.env.SSH_KEYS_PATH,
-    ANNOTAT3D_IMAGE_PATH: process.env.ANNOTAT3D_IMAGE_PATH,
+    ANNOTAT3D_CONTAINER_PATH: process.env.ANNOTAT3D_CONTAINER_PATH,
     ANNOTAT3D_PORT_RANGE0: process.env.ANNOTAT3D_PORT_RANGE0,
     ANNOTAT3D_PORT_RANGE1: process.env.ANNOTAT3D_PORT_RANGE1,
     NEXT_PUBLIC_SLURM_GPU_OPTIONS: process.env.NEXT_PUBLIC_SLURM_GPU_OPTIONS,
     NEXT_PUBLIC_SLURM_MAX_CPUS: process.env.NEXT_PUBLIC_SLURM_MAX_CPUS,
+    NEXT_PUBLIC_STORAGE_PATH: process.env.NEXT_PUBLIC_STORAGE_PATH,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
