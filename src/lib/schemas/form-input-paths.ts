@@ -10,6 +10,7 @@ export const validImageExtensions = [
   "b",
 ] as const;
 export const validAnnotationExtensions = ["pkl"] as const;
+export const validClassModelExtensions = ["model"] as const;
 
 export const imagePathSchema = z
   .string()
@@ -31,6 +32,13 @@ export const annotationPathSchema = z
   .min(2, { message: "Must be a valid annotation name!" })
   .endsWith(validAnnotationExtensions[0], {
     message: "Annotation file must be a .pkl file!",
+  });
+
+export const classModelPathSchema = z
+  .string()
+  .min(2, { message: "Must be a valid class model name!" })
+  .endsWith(validClassModelExtensions[0], {
+    message: "Class model file must be a .model file!",
   });
 
 export const outputDirSchema = z

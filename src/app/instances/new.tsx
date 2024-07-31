@@ -27,13 +27,7 @@ import { Button, buttonVariants } from "~/app/_components/ui/button";
 import { HoverCard, HoverCardContent } from "~/app/_components/ui/hover-card";
 import { cn } from "~/lib/utils";
 import { jobGPUOptions, maxCPUs } from "~/lib/constants";
-import {
-  FolderIcon,
-  FolderSearchIcon,
-  ImageIcon,
-  ImagePlusIcon,
-  MoveLeftIcon,
-} from "lucide-react";
+import { ImageIcon, ImagePlusIcon, MoveLeftIcon } from "lucide-react";
 import { useKeysError } from "../_hooks/use-keys-error";
 import { NautilusDialog } from "~/app/_components/nautilus";
 import { Label } from "../_components/ui/label";
@@ -43,6 +37,8 @@ import {
   outputDirSchema,
   validImageExtensions,
   validAnnotationExtensions,
+  classModelPathSchema,
+  validClassModelExtensions,
 } from "~/lib/schemas/form-input-paths";
 
 export default function NewInstanceForm({
@@ -66,6 +62,7 @@ export default function NewInstanceForm({
       labelPath: imagePathSchema.optional(),
       superpixelPath: imagePathSchema.optional(),
       annotationPath: annotationPathSchema.optional(),
+      classModelPath: classModelPathSchema.optional(),
       // output directory for saving results
       outputDir: outputDirSchema,
       partition: z.string(),
@@ -151,7 +148,7 @@ export default function NewInstanceForm({
           <div className="rounded-lg border border-dashed border-gray-200 p-2">
             <div
               id="images-and-annotations"
-              className="grid w-full grid-flow-row grid-cols-2 grid-rows-2 items-center gap-2"
+              className="grid w-full grid-flow-row grid-cols-2 grid-rows-3 items-center gap-2"
             >
               <FormField
                 control={form.control}
@@ -293,44 +290,78 @@ export default function NewInstanceForm({
                   </FormItem>
                 )}
               />
+              <FormField
+                control={form.control}
+                name={"classModelPath"}
+                render={({ field }) => (
+                  <FormItem>
+                    <HoverCard>
+                      <NautilusDialog
+                        onSelect={(path) => field.onChange(path)}
+                        trigger={
+                          <HoverCardTrigger asChild>
+                            <Button
+                              className="w-32 gap-1 data-[img=true]:border-violet-600 data-[img=true]:dark:border-violet-400"
+                              data-img={!!field.value}
+                              variant={"outline"}
+                            >
+                              {!!field.value ? (
+                                <ImageIcon className="h-4 w-4" />
+                              ) : (
+                                <ImagePlusIcon className="h-4 w-4" />
+                              )}
+                              Class Model
+                            </Button>
+                          </HoverCardTrigger>
+                        }
+                      />
+                      <NautilusHoverCardContent
+                        selectedPath={field.value}
+                        fieldName="class model"
+                        fieldDescription={`Select file with the following extensions: ${validClassModelExtensions.join(", ")}`}
+                      />
+                    </HoverCard>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name={"outputDir"}
+                render={({ field }) => (
+                  <FormItem>
+                    <HoverCard>
+                      <NautilusDialog
+                        onSelect={(path) => field.onChange(path)}
+                        trigger={
+                          <HoverCardTrigger asChild>
+                            <Button
+                              className="w-32 gap-1 data-[img=true]:border-violet-600 data-[img=true]:dark:border-violet-400"
+                              data-img={!!field.value}
+                              variant={"outline"}
+                            >
+                              {!!field.value ? (
+                                <ImageIcon className="h-4 w-4" />
+                              ) : (
+                                <ImagePlusIcon className="h-4 w-4" />
+                              )}
+                              Output dir
+                            </Button>
+                          </HoverCardTrigger>
+                        }
+                      />
+                      <NautilusHoverCardContent
+                        selectedPath={field.value}
+                        fieldName="output"
+                        fieldDescription={`Select output directory.`}
+                      />
+                    </HoverCard>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
             </div>
           </div>
-          <Label htmlFor="output-dir">Output Directory</Label>
-          <FormField
-            control={form.control}
-            name={"outputDir"}
-            render={({ field }) => (
-              <FormItem>
-                <HoverCard>
-                  <NautilusDialog
-                    onSelect={(path) => field.onChange(path)}
-                    trigger={
-                      <HoverCardTrigger asChild>
-                        <Button
-                          className="w-full gap-1 data-[img=true]:border-violet-600 data-[img=true]:dark:border-violet-400"
-                          data-img={!!field.value}
-                          variant={"outline"}
-                        >
-                          {!!field.value ? (
-                            <FolderIcon className="h-4 w-4" />
-                          ) : (
-                            <FolderSearchIcon className="h-4 w-4" />
-                          )}
-                          Output Directory
-                        </Button>
-                      </HoverCardTrigger>
-                    }
-                  />
-                  <NautilusHoverCardContent
-                    selectedPath={field.value}
-                    fieldName="output"
-                    fieldDescription="Select output directory"
-                  />
-                </HoverCard>
-                <FormMessage className="text-xs" />
-              </FormItem>
-            )}
-          />
           <FormField
             control={form.control}
             name="partition"
