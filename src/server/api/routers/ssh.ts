@@ -23,8 +23,6 @@ export const sshRouter = createTRPCRouter({
       const command = `ls -pm --group-directories-first ${input.path}`;
       const { stdout, stderr } = await connection.execCommand(command);
 
-      console.log(stdout, stderr);
-
       if (stderr) {
         const error = z
           .object({
