@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { signOut } from "next-auth/react";
+import { MISSING_SSH_KEYS_ERROR } from "~/lib/constants";
 
 type HookProps = {
   isError: boolean;
@@ -14,7 +15,7 @@ export function useKeysError(props: HookProps) {
   const e = error as Error;
 
   useEffect(() => {
-    if (isError && e.message === "No keys found for user") {
+    if (isError && e.message === MISSING_SSH_KEYS_ERROR) {
       void signOut();
     }
   }, [isError, e]);

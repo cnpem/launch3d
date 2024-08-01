@@ -6,3 +6,4 @@ export const jobGPUOptions = process.env.NEXT_PUBLIC_SLURM_GPU_OPTIONS?.split(
 export const maxCPUs = process.env.NEXT_PUBLIC_SLURM_MAX_CPUS
   ? parseInt(process.env.NEXT_PUBLIC_SLURM_MAX_CPUS)
   : 1;
+export const MISSING_SSH_KEYS_ERROR = "No ssh keys found";
