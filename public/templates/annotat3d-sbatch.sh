@@ -36,26 +36,26 @@ REACT_APP_OUTPUT_PATH=${INPUT_OUTPUT_PATH}
 RUNTIME_ENV_VARS=""
 # If the variable is not empty, add it to the list
 if [ ! -z "${REACT_APP_IMAGE_PATH}" ]; then
-    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS} -e REACT_APP_IMAGE_PATH=${REACT_APP_IMAGE_PATH}"
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS} REACT_APP_IMAGE_PATH=${REACT_APP_IMAGE_PATH}"
 else 
     # If this variable is not set, throw an error
     echo "ERROR: Image path is required."
     exit 1
 fi
 if [ ! -z "${REACT_APP_LABEL_PATH}" ]; then
-    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS} -e REACT_APP_LABEL_PATH=${REACT_APP_LABEL_PATH}"
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS},REACT_APP_LABEL_PATH=${REACT_APP_LABEL_PATH}"
 fi
 if [ ! -z "${REACT_APP_ANNOTATION_PATH}" ]; then
-    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS} -e REACT_APP_ANNOTATION_PATH=${REACT_APP_ANNOTATION_PATH}"
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS},REACT_APP_ANNOTATION_PATH=${REACT_APP_ANNOTATION_PATH}"
 fi
 if [ ! -z "${REACT_APP_SUPERPIXEL_PATH}" ]; then
-    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS} -e REACT_APP_SUPERPIXEL_PATH=${REACT_APP_SUPERPIXEL_PATH}"
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS},REACT_APP_SUPERPIXEL_PATH=${REACT_APP_SUPERPIXEL_PATH}"
 fi
 if [ ! -z "${REACT_APP_CLASS_PATH}" ]; then
-    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS} -e REACT_APP_CLASS_PATH=${REACT_APP_CLASS_PATH}"
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS},REACT_APP_CLASS_PATH=${REACT_APP_CLASS_PATH}"
 fi
 if [ ! -z "${REACT_APP_OUTPUT_PATH}" ]; then
-    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS} -e REACT_APP_OUTPUT_PATH=${INIT_OUTPUT_PATH}"
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS},REACT_APP_OUTPUT_PATH=${REACT_APP_OUTPUT_PATH}"
 else 
     # If this variable is not set, throw an error
     echo "ERROR: Output path is required."
@@ -161,7 +161,7 @@ run_container() {
     local BIND_PORT=$3
 
     prep_signal
-
+    echo "Running Annotat3D Web container..."
     singularity run --env "${RUNTIME_ENV_VARS}" --nv --app Annotat3D -B /ibira,/tmp,/dev/shm $CONTAINER_PATH -b "0.0.0.0:${BIND_PORT}" &
     echo ""
     echo "Access Annotat3D-web instance in http://${HOST}.lnls.br:${BIND_PORT}"
