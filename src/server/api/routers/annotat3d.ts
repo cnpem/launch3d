@@ -33,8 +33,8 @@ export const annotat3dRouter = createTRPCRouter({
         classModelPath: classModelPathSchema.optional(),
         outputDir: outputDirSchema,
         partition: z.string(),
-        gpus: z.string(),
-        cpus: z.coerce.number(),
+        gpus: z.coerce.number().min(1),
+        cpus: z.coerce.number().min(1),
       }),
     )
     .mutation(async ({ input, ctx }) => {
@@ -66,7 +66,7 @@ export const annotat3dRouter = createTRPCRouter({
         .replace("${INPUT_OUTPUT_PATH}", input.outputDir)
         .replace("${INPUT_PARTITION}", input.partition)
         .replace("${INPUT_CPUS}", input.cpus.toString())
-        .replace("${INPUT_GPUS}", input.gpus)
+        .replace("${INPUT_GPUS}", input.gpus.toString())
         .replace("${ENV_ANNOTAT3D_JOB_NAME}", jobName)
         .replace("${ENV_ANNOTAT3D_LOG_OUT}", `${jobLogName}.out`)
         .replace("${ENV_ANNOTAT3D_LOG_ERR}", `${jobLogName}.err`)
