@@ -25,7 +25,14 @@ import { cn, toUnixPath } from "~/lib/utils";
 import { api } from "~/trpc/react";
 
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "./ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTrigger,
+  DialogTitle,
+  DialogHeader,
+  DialogDescription,
+} from "./ui/dialog";
 import { Input } from "./ui/input";
 import { ScrollArea, ScrollBar } from "~/app/_components/ui/scroll-area";
 
@@ -48,7 +55,7 @@ const shortcuts: Shortcut[] = [
 const FormSchema = z.object({
   path: z
     .string()
-    .nonempty()
+    .min(1, "Path is required")
     .transform((v) => toUnixPath(v)),
 });
 
@@ -59,7 +66,7 @@ const Skeleton = () => {
     <div className="grid grid-cols-5 gap-x-1 gap-y-2 p-2">
       {Array.from({ length: 7 }).map((_, i) => (
         <div key={i}>
-          <div className="h-8 animate-pulse rounded-sm bg-muted" />
+          <div className="h-16 w-20 animate-pulse rounded-sm bg-muted" />
         </div>
       ))}
     </div>
@@ -67,10 +74,16 @@ const Skeleton = () => {
 };
 
 export const NautilusDialog = ({
+  fieldName,
+  fieldDescription,
   trigger,
+  startPath,
   onSelect,
 }: {
+  fieldName?: string;
+  fieldDescription?: string;
   trigger: React.ReactNode;
+  startPath?: string;
   onSelect: (p: string) => void;
 }) => {
   const [open, setOpen] = useState(false);
@@ -83,14 +96,39 @@ export const NautilusDialog = ({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="pt-12">
-        <Nautilus onSelect={handleSelect} />
+        <DialogHeader>
+          <DialogTitle>
+            {fieldName ? (
+              <>
+                Select
+                <span className="mx-1 text-[hsl(280,100%,70%)]">
+                  {fieldName}
+                </span>
+                path
+              </>
+            ) : (
+              "Select a file or directory"
+            )}
+          </DialogTitle>
+          <DialogDescription className="text-wrap">
+            {fieldDescription ??
+              "Navigate the remote storage and select the path for a file or directory."}
+          </DialogDescription>
+        </DialogHeader>
+        <Nautilus onSelect={handleSelect} startPath={startPath} />
       </DialogContent>
     </Dialog>
   );
 };
 
-const Nautilus = ({ onSelect }: { onSelect: (p: string) => void }) => {
-  const [path, setPath] = useState(env.NEXT_PUBLIC_STORAGE_PATH);
+const Nautilus = ({
+  onSelect,
+  startPath,
+}: {
+  onSelect: (p: string) => void;
+  startPath?: string;
+}) => {
+  const [path, setPath] = useState(startPath ?? env.NEXT_PUBLIC_STORAGE_PATH);
   const [history, setHistory] = useState<string[]>([]);
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState("");
