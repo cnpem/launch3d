@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { useQueryState } from "nuqs";
 
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import {
@@ -41,18 +41,10 @@ export default function View() {
     return <NewInstanceForm setJobId={onJobIdChange} />;
   }
 
-  return <InstanceView jobId={jobId} setJobId={onJobIdChange} />;
+  return <InstanceView jobId={jobId} />;
 }
 
-function InstanceView({
-  jobId,
-  setJobId,
-}: {
-  jobId: string;
-  setJobId: (jobId: string | undefined) => void;
-}) {
-  const utils = api.useUtils();
-
+function InstanceView({ jobId }: { jobId: string }) {
   const report = api.job.report.useQuery(
     { jobId },
     {
@@ -72,28 +64,6 @@ function InstanceView({
       enabled: !!report.data && report.data.state === "RUNNING",
     },
   );
-
-  const cancel = api.job.cancel.useMutation({
-    onSuccess: async () => {
-      await utils.job.report.invalidate({ jobId });
-      await utils.ssh.headGrep.invalidate({
-        path: `~/${jobName}-${jobId}.out`,
-      });
-    },
-  });
-
-  const clear = api.ssh.rm.useMutation({
-    onSuccess: async () => {
-      setJobId(undefined);
-      toast.dismiss();
-      toast.success("Log files cleared");
-    },
-    onError: async (error) => {
-      setJobId(undefined);
-      toast.dismiss();
-      toast.error(error.message);
-    },
-  });
 
   useKeysError({ isError: report.isError, error: report.error });
 
@@ -204,60 +174,109 @@ function InstanceView({
             </li>
           </ol>
         </div>
-        <Button
-          className="w-full"
-          variant={"destructive"}
-          onClick={() => {
-            if (
-              report.data?.state === "RUNNING" ||
-              report.data?.state === "PENDING"
-            ) {
-              cancel.mutate({ jobId });
-            } else {
-              toast(
-                <div className="flex flex-col gap-2">
-                  <p className="font-bold">Delete log files?</p>
-                  <div className="flex flex-row gap-1">
-                    <p>
-                      Do you also want to delete the log files from the remote
-                      server?
-                    </p>
-                    <Button
-                      variant={"destructive"}
-                      size={"sm"}
-                      onClick={() =>
-                        clear.mutate({
-                          path: `~/${jobName}-${jobId}.out ~/${jobName}-${jobId}.err`,
-                        })
-                      }
-                    >
-                      Yes
-                    </Button>
-                    <Button
-                      variant={"secondary"}
-                      size={"sm"}
-                      onClick={() => {
-                        setJobId(undefined);
-                        toast.dismiss();
-                      }}
-                    >
-                      No
-                    </Button>
-                  </div>
-                </div>,
-              );
-            }
-          }}
-        >
-          {report.data?.state === "RUNNING" || report.data?.state === "PENDING"
-            ? "Stop instance"
-            : "Clear dashboard"}
-        </Button>
+        {report.data?.state === "RUNNING" ||
+        report.data?.state === "PENDING" ? (
+          <CancelButton jobId={jobId} jobName={jobName} />
+        ) : (
+          <ClearDashboardButton jobId={jobId} jobName={jobName} />
+        )}
       </div>
       <div className="w-3/4">
         <Logs jobId={jobId} />
       </div>
     </div>
+  );
+}
+
+function CancelButton({ jobId, jobName }: { jobId: string; jobName: string }) {
+  const utils = api.useUtils();
+  const cancel = api.job.cancel.useMutation({
+    onSuccess: async () => {
+      await utils.job.report.invalidate({ jobId });
+      await utils.ssh.headGrep.invalidate({
+        path: `~/${jobName}-${jobId}.out`,
+      });
+    },
+    onError: async (error) => {
+      toast.error(error.message);
+    },
+  });
+  return (
+    <Button
+      className="w-full"
+      variant={"destructive"}
+      disabled={cancel.isPending}
+      onClick={() => cancel.mutate({ jobId })}
+    >
+      {cancel.isPending ? "Cancelling instance..." : "Stop instance"}
+    </Button>
+  );
+}
+
+function ClearDashboardButton({
+  jobId,
+  jobName,
+}: {
+  jobId: string;
+  jobName: string;
+}) {
+  const router = useRouter();
+  const clear = api.ssh.rm.useMutation({
+    onSuccess: async () => {
+      toast.dismiss();
+      toast.success("Log files cleared");
+      router.push("/");
+    },
+    onError: async (error) => {
+      toast.dismiss();
+      toast.error("Error removing log files: " + error.message);
+    },
+    onMutate: async () => {
+      toast.info("Removing remote files...");
+    },
+  });
+  return (
+    <Button
+      className="w-full"
+      variant={"destructive"}
+      onClick={() =>
+        toast(
+          <div className="flex flex-col gap-2">
+            <p className="font-bold">Delete log files?</p>
+            <div className="flex flex-row gap-1">
+              <p>
+                Do you also want to delete the log files from the remote server?
+              </p>
+              <Button
+                variant={"destructive"}
+                size={"sm"}
+                disabled={clear.isPending}
+                onClick={() =>
+                  clear.mutate({
+                    path: `~/${jobName}-${jobId}.out ~/${jobName}-${jobId}.err`,
+                  })
+                }
+              >
+                Yes
+              </Button>
+              <Button
+                variant={"secondary"}
+                size={"sm"}
+                disabled={clear.isPending}
+                onClick={() => {
+                  router.push("/");
+                  toast.dismiss();
+                }}
+              >
+                No
+              </Button>
+            </div>
+          </div>,
+        )
+      }
+    >
+      {clear.isPending ? "Removing remote files..." : "Clear dashboard"}
+    </Button>
   );
 }
 
