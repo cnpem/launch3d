@@ -19,9 +19,49 @@
 #SBATCH --error=${ENV_ANNOTAT3D_LOG_ERR}
 #SBATCH --gres=gpu:${INPUT_GPUS}
 
-export IMAGE_PATH=${ENV_ANNOTAT3D_IMAGE_PATH}
+export CONTAINER_PATH=${ENV_ANNOTAT3D_CONTAINER_PATH}
 export PORT_RANGE0=${ENV_ANNOTAT3D_PORT_RANGE0}
 export PORT_RANGE1=${ENV_ANNOTAT3D_PORT_RANGE1}
+
+
+# Variable list to be passed to the container
+REACT_APP_IMAGE_PATH=${INPUT_IMAGE_PATH}
+REACT_APP_LABEL_PATH=${INPUT_LABEL_PATH}
+REACT_APP_ANNOT_PATH=${INPUT_ANNOTATION_PATH}
+REACT_APP_SUPERPIXEL_PATH=${INPUT_SUPERPIXEL_PATH}
+REACT_APP_CLASS_PATH=${INPUT_CLASS_PATH}
+REACT_APP_OUTPUT_PATH=${INPUT_OUTPUT_PATH}
+
+# Variable list to be passed to the container
+RUNTIME_ENV_VARS=""
+# If the variable is not empty, add it to the list
+if [ ! -z "${REACT_APP_IMAGE_PATH}" ]; then
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS} REACT_APP_IMAGE_PATH=${REACT_APP_IMAGE_PATH}"
+else 
+    # If this variable is not set, throw an error
+    echo "ERROR: Image path is required."
+    exit 1
+fi
+if [ ! -z "${REACT_APP_LABEL_PATH}" ]; then
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS},REACT_APP_LABEL_PATH=${REACT_APP_LABEL_PATH}"
+fi
+if [ ! -z "${REACT_APP_ANNOT_PATH}" ]; then
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS},REACT_APP_ANNOT_PATH=${REACT_APP_ANNOT_PATH}"
+fi
+if [ ! -z "${REACT_APP_SUPERPIXEL_PATH}" ]; then
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS},REACT_APP_SUPERPIXEL_PATH=${REACT_APP_SUPERPIXEL_PATH}"
+fi
+if [ ! -z "${REACT_APP_CLASS_PATH}" ]; then
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS},REACT_APP_CLASS_PATH=${REACT_APP_CLASS_PATH}"
+fi
+if [ ! -z "${REACT_APP_OUTPUT_PATH}" ]; then
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS},REACT_APP_OUTPUT_PATH=${REACT_APP_OUTPUT_PATH}"
+else 
+    # If this variable is not set, throw an error
+    echo "ERROR: Output path is required."
+    exit 1
+fi
+export RUNTIME_ENV_VARS
 
 # Preventing errors when dealing with JSON and using pt_BR, since commas in floating-point
 # numbers mess everything up.
@@ -107,10 +147,10 @@ check_singularity() {
 }
 
 # check if image file exists
-check_image_path() {
+check_container_path() {
     local PATH=$1
     if [ ! -f "$PATH" ]; then
-        echo "ERROR: Container image file not found: $PATH"
+        echo "ERROR: Container file not found: $PATH"
         exit 1
     fi
 }
@@ -121,8 +161,8 @@ run_container() {
     local BIND_PORT=$3
 
     prep_signal
-
-    singularity run --nv --app Annotat3D -B /ibira,/tmp,/dev/shm $CONTAINER_PATH -b "0.0.0.0:${BIND_PORT}" &
+    echo "Running Annotat3D Web container..."
+    singularity run --env "${RUNTIME_ENV_VARS}" --nv --app Annotat3D -B /ibira,/tmp,/dev/shm $CONTAINER_PATH -b "0.0.0.0:${BIND_PORT}" &
     echo ""
     echo "Access Annotat3D-web instance in http://${HOST}.lnls.br:${BIND_PORT}"
 
@@ -150,11 +190,11 @@ main() {
 
     check_cuda_version
     check_singularity
-    check_image_path $IMAGE_PATH
+    check_container_path $CONTAINER_PATH
 
     local PORT=$(find_available_port $PORT_RANGE0 $PORT_RANGE1)
 
-    run_container $IMAGE_PATH $HOST $PORT
+    run_container $CONTAINER_PATH $HOST $PORT
 }
 
 main
