@@ -376,7 +376,7 @@ export default function NewInstanceForm({
                         Partition to run the instance on
                       </FormDescription>
                     </div>
-                    <FormMessage>
+                    <FormMessage className="max-w-60 text-wrap">
                       {userPartitions.isError &&
                         `Error loading partitions: ${userPartitions.error.message}`}
                       {userPartitions.isLoading &&
@@ -415,7 +415,7 @@ export default function NewInstanceForm({
                         Number of GPUs to use
                       </FormDescription>
                     </div>
-                    <FormMessage />
+                    <FormMessage className="max-w-60 text-wrap" />
                   </FormItem>
                 )}
               />
@@ -438,7 +438,7 @@ export default function NewInstanceForm({
                         Number of CPUs to use
                       </FormDescription>
                     </div>
-                    <FormMessage />
+                    <FormMessage className="max-w-60 text-wrap" />
                   </FormItem>
                 )}
               />
@@ -452,7 +452,9 @@ export default function NewInstanceForm({
             </div>
           </div>
           {createInstance.error && (
-            <FormMessage>{createInstance.error.message}</FormMessage>
+            <FormMessage className="text-justify text-wrap max-w-prose mx-auto mt-4">
+              {createInstance.error.message}
+            </FormMessage>
           )}
         </form>
       </Form>
