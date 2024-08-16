@@ -452,7 +452,7 @@ export default function NewInstanceForm({
             </div>
           </div>
           {createInstance.error && (
-            <FormMessage className="text-justify text-wrap max-w-prose mx-auto mt-4">
+            <FormMessage className="mx-auto mt-4 max-w-prose text-wrap text-justify">
               {createInstance.error.message}
             </FormMessage>
           )}
