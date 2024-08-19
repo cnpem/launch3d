@@ -130,10 +130,13 @@ function InstanceView({ jobId }: { jobId: string }) {
             </h1>
           </Link>
           <RenderStatusMessage
-            isDisabled={urlQuery.isPending || report.data?.state !== "RUNNING"}
+            isPending={report.isPending}
+            isNotRunning={report.data?.state !== "RUNNING"}
             isError={urlQuery.isError}
             isLoading={urlQuery.isLoading}
             url={urlQuery.data}
+            statusReason={`${report.data?.state} - ${report.data?.reason}`}
+            errorMessage={urlQuery.error?.message}
           />
         </div>
         <div className="my-4 pl-4" id="steps">
@@ -223,7 +226,6 @@ function ClearDashboardButton({
   const router = useRouter();
   const clear = api.ssh.rm.useMutation({
     onSuccess: async () => {
-      toast.dismiss();
       toast.success("Log files cleared");
       router.push("/");
     },
@@ -251,11 +253,12 @@ function ClearDashboardButton({
                 variant={"destructive"}
                 size={"sm"}
                 disabled={clear.isPending}
-                onClick={() =>
+                onClick={() => {
+                  toast.dismiss();
                   clear.mutate({
                     path: `~/${jobName}-${jobId}.out ~/${jobName}-${jobId}.err`,
-                  })
-                }
+                  });
+                }}
               >
                 Yes
               </Button>
@@ -351,23 +354,45 @@ function UrlIcon({
 }
 
 function RenderStatusMessage({
-  isDisabled,
+  isPending,
   isLoading,
   isError,
+  isNotRunning,
   url,
+  statusReason,
+  errorMessage,
 }: {
-  isDisabled: boolean;
+  isPending: boolean;
   isLoading: boolean;
   isError: boolean;
+  isNotRunning: boolean;
   url: string | undefined;
+  statusReason: string | undefined;
+  errorMessage: string | undefined;
 }) {
-  if (isDisabled)
-    return <p className="text-wrap text-slate-400">Instance is not running.</p>;
+  if (isPending)
+    return (
+      <p className="text-wrap text-slate-400">
+        Waiting status message from the server...
+      </p>
+    );
   if (isLoading)
     return <p className="text-wrap text-slate-400">Loading instance url...</p>;
   if (isError)
     return (
-      <p className="text-wrap text-slate-400">Error loading instance url.</p>
+      <p className="text-wrap text-slate-400">
+        Error loading instance url.
+        <span className="text-sm text-red-500 dark:text-red-400">
+          {errorMessage}
+        </span>
+      </p>
+    );
+  if (isNotRunning)
+    return (
+      <p className="text-wrap text-slate-400">
+        Instance is not running:{" "}
+        <span className="text-sm text-muted-foreground">{statusReason}</span>
+      </p>
     );
 
   return (
