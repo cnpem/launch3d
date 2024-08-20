@@ -8,8 +8,10 @@ import {
 } from "~/app/_components/ui/tabs";
 import { Textarea } from "~/app/_components/ui/textarea";
 import { jobName } from "~/lib/constants";
+import { useEffect } from "react";
 
 export default function LogView({ jobId }: { jobId: string }) {
+  const utils = api.useUtils();
   const stdout = api.ssh.cat.useQuery({
     path: `~/${jobName}-${jobId}.out`,
   });
@@ -17,6 +19,14 @@ export default function LogView({ jobId }: { jobId: string }) {
   const stderr = api.ssh.cat.useQuery({
     path: `~/${jobName}-${jobId}.err`,
   });
+
+  useEffect(() => {
+    if (stdout.data ?? stderr.data) {
+      utils.job.report.invalidate({ jobId }).catch((error) => {
+        console.error("Failed to invalidate report query:", error);
+      });
+    }
+  }, [stdout.data, stderr.data, utils.job.report, jobId]);
 
   return (
     <Tabs defaultValue="stdout">
