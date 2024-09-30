@@ -23,6 +23,8 @@ export const sshRouter = createTRPCRouter({
       const command = `ls -pm --group-directories-first ${input.path}`;
       const { stdout, stderr } = await connection.execCommand(command);
 
+      connection.dispose();
+
       if (stderr) {
         const error = z
           .object({
@@ -65,6 +67,8 @@ export const sshRouter = createTRPCRouter({
       const command = `cat ${input.path}`;
       const { stdout, stderr } = await connection.execCommand(command);
 
+      connection.dispose();
+
       if (stderr) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -86,6 +90,8 @@ export const sshRouter = createTRPCRouter({
 
       const command = `head ${input.lines ? `-n ${input.lines}` : ""} ${input.path}`;
       const { stdout, stderr } = await connection.execCommand(command);
+
+      connection.dispose();
 
       if (stderr) {
         throw new TRPCError({
@@ -115,6 +121,8 @@ export const sshRouter = createTRPCRouter({
       const command = `head ${input.lines ? `-n ${input.lines}` : ""} ${input.path} | grep ${input.grep}`;
       const { stdout, stderr } = await connection.execCommand(command);
 
+      connection.dispose();
+
       if (stderr) {
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -143,6 +151,8 @@ export const sshRouter = createTRPCRouter({
 
       const command = `rm ${input.path}`;
       const { stdout, stderr } = await connection.execCommand(command);
+
+      connection.dispose();
 
       if (stderr) {
         throw new TRPCError({
