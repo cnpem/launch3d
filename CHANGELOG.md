@@ -1,5 +1,11 @@
 # launch3d
 
+## 0.2.1
+
+### Patch Changes
+
+- Fixing cuda checks in job script and small fixes on form placeholder.
+
 ## 0.2.0
 
 ### Minor Changes

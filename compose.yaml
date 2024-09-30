@@ -9,6 +9,7 @@ services:
       args:
         - NEXT_PUBLIC_SLURM_GPU_OPTIONS=${NEXT_PUBLIC_SLURM_GPU_OPTIONS}
         - NEXT_PUBLIC_SLURM_MAX_CPUS=${NEXT_PUBLIC_SLURM_MAX_CPUS}
+        - NEXT_PUBLIC_STORAGE_PATH=${NEXT_PUBLIC_STORAGE_PATH}
     volumes:
       - /cert.cer:${LDAP_CERTIFICATE_PATH}:ro
     env_file:

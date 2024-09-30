@@ -14,6 +14,7 @@ FROM base AS builder
 # build args
 ARG NEXT_PUBLIC_SLURM_GPU_OPTIONS
 ARG NEXT_PUBLIC_SLURM_MAX_CPUS
+ARG NEXT_PUBLIC_STORAGE_PATH
 
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
