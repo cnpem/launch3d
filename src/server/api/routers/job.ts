@@ -98,7 +98,6 @@ export const jobRouter = createTRPCRouter({
       const command = `sacct --job ${jobId}.batch --format=State --parsable2`;
       const { stdout, stderr } = await connection.execCommand(command);
 
-
       if (stderr) {
         throw new Error(stderr);
       }
@@ -132,7 +131,6 @@ export const jobRouter = createTRPCRouter({
       const command = `scancel ${jobId}`;
       const { stderr } = await connection.execCommand(command);
 
-
       if (stderr) {
         throw new Error(stderr);
       }
@@ -152,8 +150,6 @@ export const jobRouter = createTRPCRouter({
 
       const command = `sacct --format="State,Submit,Start,End,Elapsed,Partition,NodeList,AllocGRES,NCPUS,Reason,ExitCode" --parsable2 --job ${jobId} --noheader`;
       const { stdout, stderr } = await connection.execCommand(command);
-
-
 
       if (stderr) {
         throw new TRPCError({

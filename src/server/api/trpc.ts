@@ -155,7 +155,11 @@ export const protectedProcedureWithCredentials = t.procedure.use(
     const res = await next({
       ctx: {
         // infers the `session` as non-nullable
-        session: { ...ctx.session, credentials: { name: username, keys }, connection },
+        session: {
+          ...ctx.session,
+          credentials: { name: username, keys },
+          connection,
+        },
       },
     });
 
