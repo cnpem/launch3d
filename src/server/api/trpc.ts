@@ -14,7 +14,10 @@ import { ZodError } from "zod";
 import { getServerAuthSession } from "~/server/auth";
 
 import { getSSHKeys } from "~/server/ssh/utils";
+import { ssh } from "../ssh";
+import { cache as sshCache } from "../ssh/sesh";
 import { MISSING_SSH_KEYS_ERROR } from "~/lib/constants";
+import { env } from "~/env";
 /**
  * 1. CONTEXT
  *
@@ -32,6 +35,8 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 
   return {
     session,
+    ssh,
+    sshCache,
     ...opts,
   };
 };
@@ -108,7 +113,7 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
 });
 
 export const protectedProcedureWithCredentials = t.procedure.use(
-  ({ ctx, next }) => {
+  async ({ ctx, next }) => {
     if (!ctx.session || !ctx.session.user) {
       throw new TRPCError({ code: "UNAUTHORIZED" });
     }
@@ -126,11 +131,34 @@ export const protectedProcedureWithCredentials = t.procedure.use(
         message: MISSING_SSH_KEYS_ERROR,
       });
     }
-    return next({
+
+    let connection = sshCache.get(username);
+    if (!connection) {
+      console.log("Creating new SSH connection");
+      connection = await ssh.connect({
+        username,
+        privateKey: keys.privateKey,
+        host: env.SSH_HOST,
+        port: 22,
+        passphrase: env.SSH_PASSPHRASE,
+      });
+
+      if (!connection) {
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to establish SSH connection",
+        });
+      }
+      sshCache.set(username, connection, 1000 * 60 * 5);
+    }
+
+    const res = await next({
       ctx: {
         // infers the `session` as non-nullable
-        session: { ...ctx.session, credentials: { name: username, keys } },
+        session: { ...ctx.session, credentials: { name: username, keys }, connection },
       },
     });
+
+    return res;
   },
 );

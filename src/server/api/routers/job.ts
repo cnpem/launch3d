@@ -3,8 +3,6 @@ import {
   createTRPCRouter,
   protectedProcedureWithCredentials,
 } from "~/server/api/trpc";
-import { ssh } from "~/server/ssh";
-import { env } from "~/env";
 import { TRPCError } from "@trpc/server";
 import fs from "fs/promises";
 import { jobName } from "~/lib/constants";
@@ -95,17 +93,12 @@ export const jobRouter = createTRPCRouter({
     )
     .query(async ({ ctx, input }) => {
       const jobId = input.jobId;
-      const connection = await ssh.connect({
-        host: env.SSH_HOST,
-        username: ctx.session.credentials.name,
-        privateKey: ctx.session.credentials.keys.privateKey,
-        passphrase: env.SSH_PASSPHRASE,
-      });
+      const connection = ctx.session.connection;
 
       const command = `sacct --job ${jobId}.batch --format=State --parsable2`;
       const { stdout, stderr } = await connection.execCommand(command);
 
-      connection.dispose();
+
       if (stderr) {
         throw new Error(stderr);
       }
@@ -134,16 +127,11 @@ export const jobRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       const jobId = input.jobId;
-      const connection = await ssh.connect({
-        host: env.SSH_HOST,
-        username: ctx.session.credentials.name,
-        privateKey: ctx.session.credentials.keys.privateKey,
-        passphrase: env.SSH_PASSPHRASE,
-      });
+      const connection = ctx.session.connection;
 
       const command = `scancel ${jobId}`;
       const { stderr } = await connection.execCommand(command);
-      connection.dispose();
+
 
       if (stderr) {
         throw new Error(stderr);
@@ -160,17 +148,12 @@ export const jobRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const jobId = input.jobId;
 
-      const connection = await ssh.connect({
-        host: env.SSH_HOST,
-        username: ctx.session.credentials.name,
-        privateKey: ctx.session.credentials.keys.privateKey,
-        passphrase: env.SSH_PASSPHRASE,
-      });
+      const connection = ctx.session.connection;
 
       const command = `sacct --format="State,Submit,Start,End,Elapsed,Partition,NodeList,AllocGRES,NCPUS,Reason,ExitCode" --parsable2 --job ${jobId} --noheader`;
       const { stdout, stderr } = await connection.execCommand(command);
 
-      connection.dispose();
+
 
       if (stderr) {
         throw new TRPCError({
@@ -236,12 +219,7 @@ export const jobRouter = createTRPCRouter({
       };
     }),
   userPartitions: protectedProcedureWithCredentials.query(async ({ ctx }) => {
-    const connection = await ssh.connect({
-      host: env.SSH_HOST,
-      username: ctx.session.credentials.name,
-      privateKey: ctx.session.credentials.keys.privateKey,
-      passphrase: env.SSH_PASSPHRASE,
-    });
+    const connection = ctx.session.connection;
 
     const templatePath = "public/templates/user-partitions.sh";
     const scriptTemplate = await fs.readFile(templatePath, "utf-8");
@@ -253,7 +231,6 @@ export const jobRouter = createTRPCRouter({
 
     const { stdout, stderr } = await connection.execCommand(content);
 
-    connection.dispose();
     if (stderr) {
       throw new Error(stderr);
     }
@@ -316,17 +293,11 @@ export const jobRouter = createTRPCRouter({
     return { partitions };
   }),
   userRecentJobs: protectedProcedureWithCredentials.query(async ({ ctx }) => {
-    const connection = await ssh.connect({
-      host: env.SSH_HOST,
-      username: ctx.session.credentials.name,
-      privateKey: ctx.session.credentials.keys.privateKey,
-      passphrase: env.SSH_PASSPHRASE,
-    });
+    const connection = ctx.session.connection;
 
     const command = `sacct --parsable2 --user ${ctx.session.credentials.name} --name ${jobName} --allocations --format=JobID,State --noheader`;
     const { stdout, stderr } = await connection.execCommand(command);
 
-    connection.dispose();
     if (stderr) {
       throw new Error(stderr);
     }

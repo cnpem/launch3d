@@ -5,25 +5,18 @@ import {
   protectedProcedureWithCredentials,
 } from "~/server/api/trpc";
 import { TRPCError } from "@trpc/server";
-import { ssh } from "~/server/ssh";
-import { env } from "~/env";
+
 import { sshLsSchema } from "~/lib/schemas/ssh-ls";
 
 export const sshRouter = createTRPCRouter({
   ls: protectedProcedureWithCredentials
     .input(z.object({ path: z.string() }))
     .query(async ({ input, ctx }) => {
-      const connection = await ssh.connect({
-        host: env.SSH_HOST,
-        username: ctx.session.credentials.name,
-        privateKey: ctx.session.credentials.keys.privateKey,
-        passphrase: env.SSH_PASSPHRASE,
-      });
+      const connection = ctx.session.connection;
 
       const command = `ls -pm --group-directories-first ${input.path}`;
       const { stdout, stderr } = await connection.execCommand(command);
 
-      connection.dispose();
 
       if (stderr) {
         const error = z
@@ -57,17 +50,10 @@ export const sshRouter = createTRPCRouter({
   cat: protectedProcedureWithCredentials
     .input(z.object({ path: z.string() }))
     .query(async ({ input, ctx }) => {
-      const connection = await ssh.connect({
-        host: env.SSH_HOST,
-        username: ctx.session.credentials.name,
-        privateKey: ctx.session.credentials.keys.privateKey,
-        passphrase: env.SSH_PASSPHRASE,
-      });
+      const connection = ctx.session.connection;
 
       const command = `cat ${input.path}`;
       const { stdout, stderr } = await connection.execCommand(command);
-
-      connection.dispose();
 
       if (stderr) {
         throw new TRPCError({
@@ -81,17 +67,10 @@ export const sshRouter = createTRPCRouter({
   head: protectedProcedureWithCredentials
     .input(z.object({ path: z.string(), lines: z.number().optional() }))
     .query(async ({ input, ctx }) => {
-      const connection = await ssh.connect({
-        host: env.SSH_HOST,
-        username: ctx.session.credentials.name,
-        privateKey: ctx.session.credentials.keys.privateKey,
-        passphrase: env.SSH_PASSPHRASE,
-      });
+      const connection = ctx.session.connection;
 
       const command = `head ${input.lines ? `-n ${input.lines}` : ""} ${input.path}`;
       const { stdout, stderr } = await connection.execCommand(command);
-
-      connection.dispose();
 
       if (stderr) {
         throw new TRPCError({
@@ -111,17 +90,10 @@ export const sshRouter = createTRPCRouter({
       }),
     )
     .query(async ({ input, ctx }) => {
-      const connection = await ssh.connect({
-        host: env.SSH_HOST,
-        username: ctx.session.credentials.name,
-        privateKey: ctx.session.credentials.keys.privateKey,
-        passphrase: env.SSH_PASSPHRASE,
-      });
+      const connection = ctx.session.connection;
 
       const command = `head ${input.lines ? `-n ${input.lines}` : ""} ${input.path} | grep ${input.grep}`;
       const { stdout, stderr } = await connection.execCommand(command);
-
-      connection.dispose();
 
       if (stderr) {
         throw new TRPCError({
@@ -142,17 +114,10 @@ export const sshRouter = createTRPCRouter({
   rm: protectedProcedureWithCredentials
     .input(z.object({ path: z.string() }))
     .mutation(async ({ input, ctx }) => {
-      const connection = await ssh.connect({
-        host: env.SSH_HOST,
-        username: ctx.session.credentials.name,
-        privateKey: ctx.session.credentials.keys.privateKey,
-        passphrase: env.SSH_PASSPHRASE,
-      });
+      const connection = ctx.session.connection;
 
       const command = `rm ${input.path}`;
       const { stdout, stderr } = await connection.execCommand(command);
-
-      connection.dispose();
 
       if (stderr) {
         throw new TRPCError({
