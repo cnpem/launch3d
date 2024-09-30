@@ -1,5 +1,11 @@
 # launch3d
 
+## 0.2.3
+
+### Patch Changes
+
+- Update annotat3d job submission to use ssh session connection
+
 ## 0.2.2
 
 ### Patch Changes
