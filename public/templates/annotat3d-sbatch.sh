@@ -116,6 +116,28 @@ find_available_port() {
     return 1
 }
 
+# returns the CUDA version if found, exit otherwise
+check_cuda_version() {
+    local CMD=""
+    if [ $(command -v nvcc) ]; then
+        CMD=nvcc
+    elif [ -x /usr/local/cuda/bin/nvcc ]; then
+        CMD=/usr/local/cuda/bin/nvcc
+    fi
+
+    local CUDA_VERSION_MAJOR=""
+    if [[ $CMD != "" ]]; then
+        CUDA_VERSION=$($CMD --version | grep "release" | awk '{print $6}' | cut -c2-)
+        CUDA_VERSION_MAJOR=$(echo $CUDA_VERSION | cut -d. -f1)
+    else
+        echo "ERROR: Failed to find CUDA version."
+        exit 1
+    fi
+
+    echo "CUDA version: $CUDA_VERSION_MAJOR"
+    return 0
+}
+
 # check if singularity is installed
 check_singularity() {
     if [ ! $(command -v singularity) ]; then
@@ -166,8 +188,7 @@ main() {
         export LD_LIBRARY_PATH=/usr/local/lib64:$LD_LIBRARY_PATH
     fi
 
-    module load cuda
-
+    check_cuda_version
     check_singularity
     check_container_path $CONTAINER_PATH
 
