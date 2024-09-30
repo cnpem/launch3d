@@ -1,7 +1,5 @@
 import { env } from "~/env";
-import { createTRPCRouter, protectedProcedure } from "../trpc";
-import { ssh } from "~/server/ssh";
-import { getSSHKeys } from "~/server/ssh/utils";
+import { createTRPCRouter, protectedProcedureWithCredentials } from "../trpc";
 import { z } from "zod";
 import fs from "fs/promises";
 import path from "path";
@@ -23,7 +21,7 @@ async function createTmpScript(content: string) {
 }
 
 export const annotat3dRouter = createTRPCRouter({
-  start: protectedProcedure
+  start: protectedProcedureWithCredentials
     .input(
       z.object({
         imagePath: imagePathSchema,
@@ -38,21 +36,7 @@ export const annotat3dRouter = createTRPCRouter({
       }),
     )
     .mutation(async ({ input, ctx }) => {
-      const name = ctx.session.user.name;
-      if (!name) {
-        throw new Error("No user found");
-      }
-      const keys = getSSHKeys(name);
-      if (!keys) {
-        throw new Error("No keys found for user");
-      }
-
-      const connection = await ssh.connect({
-        host: env.SSH_HOST,
-        username: name,
-        privateKey: keys.privateKey,
-        passphrase: env.SSH_PASSPHRASE,
-      });
+      const connection = ctx.session.connection;
 
       const templatePath = "public/templates/annotat3d-sbatch.sh";
       const scriptTemplate = await fs.readFile(templatePath, "utf-8");
