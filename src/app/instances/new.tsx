@@ -165,7 +165,7 @@ export default function NewInstanceForm({
                 htmlFor="load-files"
                 className="text-md mb-4 text-[hsl(280,100%,70%)]"
               >
-                Load files
+                Load paths
               </Label>
               <FormField
                 control={form.control}
@@ -299,7 +299,7 @@ export default function NewInstanceForm({
                   <FormItem className="w-full">
                     <FormControl>
                       <NautilusInput
-                        fieldLabel="Output"
+                        fieldLabel="Output dir"
                         fieldDescription={`Select an existing path for the output directory.`}
                         fieldValue={field.value}
                         fieldIcon={<FolderIcon className="h-4 w-4" />}
@@ -518,23 +518,30 @@ function NautilusInput({
                   "mt-2 w-60 justify-between font-normal",
                 )}
               >
-                <span className="overflow-hidden overflow-ellipsis">
-                  {formatInputValue(fieldValue) ?? "Select file"}
-                </span>
                 {!fieldValue ? (
-                  <FolderSearchIcon className="h-4 w-4 text-muted-foreground " />
+                  <>
+                    <span className="text-muted-foreground">
+                      Select remote path
+                    </span>
+                    <FolderSearchIcon className="h-4 w-4 text-muted-foreground " />
+                  </>
                 ) : (
-                  <Button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onClearPath();
-                    }}
-                    variant={"ghost"}
-                    size={"icon"}
-                    className="h-5 w-5 text-red-500 "
-                  >
-                    <XIcon className="h-4 w-4" />
-                  </Button>
+                  <>
+                    <span className="overflow-hidden overflow-ellipsis">
+                      {formatInputValue(fieldValue)}
+                    </span>
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onClearPath();
+                      }}
+                      variant={"ghost"}
+                      size={"icon"}
+                      className="h-5 w-5 text-red-500 "
+                    >
+                      <XIcon className="h-4 w-4" />
+                    </Button>
+                  </>
                 )}
               </div>
             }
