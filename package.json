@@ -11,6 +11,7 @@
     "format:fix": "prettier --write \"**/*.{cjs,mjs,js,jsx,ts,tsx,md,json}\"",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf .next node_modules",
+    "local-ci": "pnpm run lint && pnpm run typecheck && pnpm run format",
     "start": "next start"
   },
   "dependencies": {
