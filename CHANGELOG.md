@@ -1,5 +1,11 @@
 # launch3d
 
+## 0.2.2
+
+### Patch Changes
+
+- Add TTL cache to store SSH sessions
+
 ## 0.2.1
 
 ### Patch Changes
