@@ -1,5 +1,11 @@
 # launch3d
 
+## 0.2.4
+
+### Patch Changes
+
+- Stop sharing SSH cached connections between user sessions and better check if connection still alive before using from cache
+
 ## 0.2.3
 
 ### Patch Changes
