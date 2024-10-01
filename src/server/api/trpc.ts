@@ -14,7 +14,7 @@ import { ZodError } from "zod";
 import { getServerAuthSession } from "~/server/auth";
 
 import { getSSHKeys } from "~/server/ssh/utils";
-import { ssh } from "../ssh";
+import { NodeSSH } from "node-ssh";
 import { cache as sshCache } from "../ssh/sesh";
 import { MISSING_SSH_KEYS_ERROR } from "~/lib/constants";
 import { env } from "~/env";
@@ -35,7 +35,6 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 
   return {
     session,
-    ssh,
     sshCache,
     ...opts,
   };
@@ -133,8 +132,9 @@ export const protectedProcedureWithCredentials = t.procedure.use(
     }
 
     let connection = sshCache.get(username);
-    if (!connection) {
-      console.log("Creating new SSH connection");
+    if (!connection?.isConnected()) {
+      sshCache.delete(username);
+      const ssh = new NodeSSH();
       connection = await ssh.connect({
         username,
         privateKey: keys.privateKey,

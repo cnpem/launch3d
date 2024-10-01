@@ -1,5 +1,5 @@
 import { promisify } from "util";
-import { ssh } from ".";
+import { NodeSSH } from "node-ssh";
 import { env } from "~/env";
 import { exec } from "child_process";
 import { MISSING_SSH_KEYS_ERROR } from "~/lib/constants";
@@ -83,6 +83,8 @@ export async function copyPublicKeyToServer(
   if (!publicKey) {
     throw new Error(MISSING_SSH_KEYS_ERROR);
   }
+
+  const ssh = new NodeSSH();
 
   const connection = await ssh.connect({
     host: env.SSH_HOST,
