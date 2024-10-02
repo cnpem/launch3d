@@ -5,12 +5,12 @@ and to provide a simple interface to submit new Annotat3D jobs through the slurm
 
 # Usage
 
-The use of the running instance of this tool is restricted to CNPEM internal network. 
+The use of the running instance of this tool is restricted to CNPEM internal network.
 One can access the tool by visiting the following URL:
 
 [https://annotat3d.lnls.br](https://annotat3d.lnls.br)
 
-But you can also run this tool locally by building the docker image and running it, provided that 
+But you can also run this tool locally by building the docker image and running it, provided that
 you have access to a similar infrastructure and properly configured the environment variables.
 You can run the docker image with the following command:
 
@@ -42,5 +42,5 @@ This will start the development server on [http://localhost:3000](http://localho
 
 # License
 
-This project is licensed under the GNU General Public License v3.0. You can find the full 
+This project is licensed under the GNU General Public License v3.0. You can find the full
 license text in the [LICENSE](LICENSE) file.
