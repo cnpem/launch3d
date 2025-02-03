@@ -25,6 +25,7 @@ export PORT_RANGE1=${ENV_ANNOTAT3D_PORT_RANGE1}
 
 
 # Variable list to be passed to the container
+REACT_APP_USERNAME=${USERNAME}
 REACT_APP_IMAGE_PATH=${INPUT_IMAGE_PATH}
 REACT_APP_LABEL_PATH=${INPUT_LABEL_PATH}
 REACT_APP_ANNOT_PATH=${INPUT_ANNOTATION_PATH}
@@ -35,8 +36,15 @@ REACT_APP_OUTPUT_PATH=${INPUT_OUTPUT_PATH}
 # Variable list to be passed to the container
 RUNTIME_ENV_VARS=""
 # If the variable is not empty, add it to the list
+if [ ! -z "${REACT_APP_USERNAME}" ]; then
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS},REACT_APP_USERNAME=${REACT_APP_USERNAME}"
+else 
+    # If this variable is not set, throw an error
+    echo "ERROR: Username is required."
+    exit 1
+fi
 if [ ! -z "${REACT_APP_IMAGE_PATH}" ]; then
-    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS} REACT_APP_IMAGE_PATH=${REACT_APP_IMAGE_PATH}"
+    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS},REACT_APP_IMAGE_PATH=${REACT_APP_IMAGE_PATH}"
 else 
     # If this variable is not set, throw an error
     echo "ERROR: Image path is required."

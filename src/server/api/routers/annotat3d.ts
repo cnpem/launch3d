@@ -37,11 +37,13 @@ export const annotat3dRouter = createTRPCRouter({
     )
     .mutation(async ({ input, ctx }) => {
       const connection = ctx.session.connection;
+      const username = ctx.session.credentials.name;
 
       const templatePath = "public/templates/annotat3d-sbatch.sh";
       const scriptTemplate = await fs.readFile(templatePath, "utf-8");
 
       const content = scriptTemplate
+        .replace("${USERNAME}", username)
         .replace("${INPUT_IMAGE_PATH}", input.imagePath)
         .replace("${INPUT_LABEL_PATH}", input.labelPath ?? "")
         .replace("${INPUT_ANNOTATION_PATH}", input.annotationPath ?? "")
