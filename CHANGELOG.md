@@ -1,5 +1,11 @@
 # launch3d
 
+## 0.2.5
+
+### Patch Changes
+
+- f85d58c: Submit username as env variable to annotat3d container.
+
 ## 0.2.4
 
 ### Patch Changes
