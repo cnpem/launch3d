@@ -13,6 +13,7 @@
 # The other variables are used by the script itself during the execution.
 
 #SBATCH --partition=${INPUT_PARTITION}
+#SBATCH --account=${INPUT_ACCOUNT}
 #SBATCH --cpus-per-task=${INPUT_CPUS}
 #SBATCH --job-name=${ENV_ANNOTAT3D_JOB_NAME}
 #SBATCH --output=${ENV_ANNOTAT3D_LOG_OUT}
@@ -22,7 +23,6 @@
 export CONTAINER_PATH=${ENV_ANNOTAT3D_CONTAINER_PATH}
 export PORT_RANGE0=${ENV_ANNOTAT3D_PORT_RANGE0}
 export PORT_RANGE1=${ENV_ANNOTAT3D_PORT_RANGE1}
-
 
 # Variable list to be passed to the container
 REACT_APP_USERNAME=${USERNAME}
@@ -37,7 +37,7 @@ REACT_APP_OUTPUT_PATH=${INPUT_OUTPUT_PATH}
 RUNTIME_ENV_VARS=""
 # If the variable is not empty, add it to the list
 if [ ! -z "${REACT_APP_USERNAME}" ]; then
-    RUNTIME_ENV_VARS="${RUNTIME_ENV_VARS},REACT_APP_USERNAME=${REACT_APP_USERNAME}"
+    RUNTIME_ENV_VARS="REACT_APP_USERNAME=${REACT_APP_USERNAME}"
 else 
     # If this variable is not set, throw an error
     echo "ERROR: Username is required."

@@ -15,6 +15,7 @@ const groupQoSLimitSchema = z.object({
 
 const partitionSchema = z.object({
   partitionName: z.string(),
+  account: z.string(),
   qos: z.string(),
   nodeList: z.string(),
   cpusState: cpusStateSchema,
