@@ -126,7 +126,11 @@ export default function NewInstanceForm({
   });
 
   const onSubmit = async (data: z.infer<typeof formSchema>) => {
-    await createInstance.mutateAsync(data);
+    const account = userPartitions.data?.partitions.find(
+      (p) => p.partition === data.partition,
+    )?.account;
+    if (!account) return;
+    await createInstance.mutateAsync({ ...data, account });
   };
 
   return (
@@ -345,7 +349,9 @@ export default function NewInstanceForm({
                       >
                         <FormControl>
                           <SelectTrigger className="mt-2 w-40">
-                            <SelectValue placeholder="Select partition" />
+                            <SelectValue asChild placeholder="Select partition">
+                              <span>{field.value}</span>
+                            </SelectValue>
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -353,21 +359,25 @@ export default function NewInstanceForm({
                             <SelectItem
                               key={option.partition}
                               value={option.partition}
-                              className="!text-justify"
                             >
-                              <span className="mr-2 font-bold">
-                                {option.partition}
-                              </span>
-                              <span className="text-sm text-gray-500">
-                                <span className="text-sm text-green-500">
-                                  {option.cpus.free}
+                              <div className="flex flex-row gap-1">
+                                <span className="font-semibold">
+                                  {option.partition}
                                 </span>
-                                /{option.cpus.max} cpus,{" "}
-                                <span className="text-sm text-green-500">
-                                  {option.gpus.free}
+                                <span className="text-sm">
+                                  ({option.account})
                                 </span>
-                                /{option.gpus.max} gpus
-                              </span>
+                                <span className="text-sm text-gray-500">
+                                  <span className="text-sm text-green-500">
+                                    {option.cpus.free}
+                                  </span>
+                                  /{option.cpus.max} cpus,{" "}
+                                  <span className="text-sm text-green-500">
+                                    {option.gpus.free}
+                                  </span>
+                                  /{option.gpus.max} gpus
+                                </span>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>

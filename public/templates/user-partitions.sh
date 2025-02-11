@@ -28,10 +28,10 @@ list_all_partitions_load() {
     sinfo --Format="Partition:|,CPUsState:|,NodeList:|,Gres:|,GresUsed:" --noheader || error_exit "Failed to get node load information."
 }
 
-# Function to list user partitions
-list_user_partitions() {
+# Function to list user partitions and partition accounts
+list_user_partition_account() {
     local username=$1
-    sacctmgr show assoc user="$username" format=partition -P --noheader || error_exit "Failed to get user partitions."
+    sacctmgr show assoc user="$username" format=partition,account -P --noheader || error_exit "Failed to get user partitions."
 }
 
 # Function to list all partitions QoS
@@ -44,7 +44,7 @@ format_grep_list() {
     local list=$1
     local grep_list=""
     local partition
-    while IFS= read -r partition; do
+    while IFS='|' read -r partition account; do
         grep_list+="$partition|"
     done <<<"$list"
     # Remove the trailing '|'
@@ -141,19 +141,19 @@ combine_partition_data() {
     # Get the data from the functions
     local qos_limits_list=$(list_partitions_qos_limits)
     local partitions_load=$(list_all_partitions_load)
-    local user_partitions=$(list_user_partitions "$username")
+    local user_partition_accounts=$(list_user_partition_account "$username")
     local partitions_qos=$(list_all_partitions_qos)
 
     # Convert user_partitions to a grep list
     local user_partitions_grep_list
-    user_partitions_grep_list=$(format_grep_list "$user_partitions")
+    user_partitions_grep_list=$(format_grep_list "$user_partition_accounts")
 
     # Filter partitions_qos by user_partitions
     local filtered_partitions_qos=$(echo "$partitions_qos" | grep -E "$user_partitions_grep_list")
 
     # if user_partitions is empty, set it to all partitions
-    if [ -z "$user_partitions" ]; then
-        user_partitions=$(echo "$partitions_load" | cut -d'|' -f1)
+    if [ -z "$user_partition_accounts" ]; then
+        user_partition_accounts=$(echo "$partitions_load" | cut -d'|' -f1)
     fi
 
     # format start of the JSON output
@@ -166,7 +166,7 @@ combine_partition_data() {
     local partitions_array_output=""
     partitions_array_output+="["
     # Process each user partition
-    while IFS= read -r user_partition; do
+    while IFS='|' read -r user_partition partition_account; do
         local partition_json_output=""
         local qos=""
         local qos_limits=""
@@ -223,6 +223,7 @@ combine_partition_data() {
         # Manually format and display the combined data as JSON
         partition_json_output="{"
         partition_json_output+="\"partitionName\":\"$user_partition\","
+        partition_json_output+="\"account\":\"$partition_account\","
         partition_json_output+="\"qos\":\"$qos\","
         partition_json_output+="\"nodeList\":\"$node_list\","
         partition_json_output+="\"cpusState\":$load,"
@@ -232,7 +233,7 @@ combine_partition_data() {
         partition_json_output+="}"
         # Add the partition JSON output to the partitions array output with a comma
         partitions_array_output+="$partition_json_output,"
-    done <<<"$user_partitions"
+    done <<<"$user_partition_accounts"
     # format end of the JSON output
     # remove last comma and
     partitions_array_output="${partitions_array_output%,}"

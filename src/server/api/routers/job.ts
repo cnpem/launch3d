@@ -274,6 +274,7 @@ export const jobRouter = createTRPCRouter({
 
       return {
         partition: partition.partitionName,
+        account: partition.account,
         nodeList: partition.nodeList,
         cpus: {
           free: freeCpus,
