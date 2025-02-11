@@ -6,11 +6,10 @@ import { buttonVariants } from "~/app/_components/ui/button";
 import { MoveLeftIcon } from "lucide-react";
 import { SignInForm } from "./form";
 
-export default async function SignIn({
-  searchParams,
-}: {
-  searchParams: { callbackUrl: string };
+export default async function SignIn(props: {
+  searchParams: Promise<{ callbackUrl: string }>;
 }) {
+  const searchParams = await props.searchParams;
   const session = await getServerAuthSession();
   if (!!session) {
     redirect(searchParams.callbackUrl || "/");
