@@ -31,6 +31,7 @@ export const annotat3dRouter = createTRPCRouter({
         classModelPath: classModelPathSchema.optional(),
         outputDir: outputDirSchema,
         partition: z.string(),
+        account: z.string(),
         gpus: z.coerce.number().min(1),
         cpus: z.coerce.number().min(1),
       }),
@@ -44,6 +45,7 @@ export const annotat3dRouter = createTRPCRouter({
 
       const content = scriptTemplate
         .replace("${USERNAME}", username)
+        .replace("${INPUT_ACCOUNT}", input.account)
         .replace("${INPUT_IMAGE_PATH}", input.imagePath)
         .replace("${INPUT_LABEL_PATH}", input.labelPath ?? "")
         .replace("${INPUT_ANNOTATION_PATH}", input.annotationPath ?? "")

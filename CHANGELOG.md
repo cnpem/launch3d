@@ -1,5 +1,11 @@
 # launch3d
 
+## 0.2.6
+
+### Patch Changes
+
+- Add slurm partition+account association when querying available partitions for the user and submitting jobs
+
 ## 0.2.5
 
 ### Patch Changes
