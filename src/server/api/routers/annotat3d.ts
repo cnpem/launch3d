@@ -50,7 +50,7 @@ export const annotat3dRouter = createTRPCRouter({
         .replace("${INPUT_LABEL_PATH}", input.labelPath ?? "")
         .replace("${INPUT_ANNOTATION_PATH}", input.annotationPath ?? "")
         .replace("${INPUT_SUPERPIXEL_PATH}", input.superpixelPath ?? "")
-        .replace("${INPUT_CLASS_MODEL_PATH}", input.classModelPath ?? "")
+        .replace("${INPUT_CLASS_PATH}", input.classModelPath ?? "")
         .replace("${INPUT_OUTPUT_PATH}", input.outputDir)
         .replace("${INPUT_PARTITION}", input.partition)
         .replace("${INPUT_CPUS}", input.cpus.toString())
