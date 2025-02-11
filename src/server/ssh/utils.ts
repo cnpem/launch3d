@@ -3,6 +3,7 @@ import { NodeSSH } from "node-ssh";
 import { env } from "~/env";
 import { exec } from "child_process";
 import { MISSING_SSH_KEYS_ERROR } from "~/lib/constants";
+import type { ErrnoException } from "~/lib/constants";
 import fs from "fs/promises";
 
 const createDb = () => {
@@ -97,9 +98,13 @@ export async function copyPublicKeyToServer(
   // create directory if it doesn't exist
   await new Promise<void>((resolve, reject) => {
     sftp.mkdir(".ssh", (err) => {
-      const error = err as NodeJS.ErrnoException;
-      if (err && isErrnoException(err) && error.code !== "EEXIST") {
-        reject(error);
+      const error = err as ErrnoException;
+      if (error) {
+        if (error.code === 4) {
+          resolve();
+        } else {
+          reject(error);
+        }
       } else {
         resolve();
       }
@@ -109,16 +114,16 @@ export async function copyPublicKeyToServer(
   // get existing authorized_keys
   const existingAuthorizedKeys = await new Promise<string>(
     (resolve, reject) => {
-      sftp.readFile(".ssh/authorized_keys", (err, data) => {
+      sftp.readFile(".ssh/authorized_keys", (err, keys) => {
         if (err) {
-          const error = err as NodeJS.ErrnoException;
-          if (isErrnoException(err) && error.code === "ENOENT") {
+          const error = err as ErrnoException;
+          if (error.code === 2) {
             resolve("");
           } else {
-            reject(err);
+            reject(error);
           }
         } else {
-          resolve(data.toString());
+          resolve(keys.toString());
         }
       });
     },
@@ -149,8 +154,4 @@ export async function copyPublicKeyToServer(
 
   console.log("Public key copied to server");
   return publicKey;
-}
-
-function isErrnoException(error: unknown) {
-  return error instanceof Error && "code" in error && "errno" in error;
 }
