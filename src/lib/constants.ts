@@ -7,3 +7,11 @@ export const maxCPUs = process.env.NEXT_PUBLIC_SLURM_MAX_CPUS
   ? parseInt(process.env.NEXT_PUBLIC_SLURM_MAX_CPUS)
   : 1;
 export const MISSING_SSH_KEYS_ERROR = "No ssh keys found";
+
+export interface ErrnoException extends Error {
+  errno?: number;
+  code?: number | string;
+  path?: string;
+  syscall?: string;
+  stack?: string;
+}
