@@ -146,6 +146,7 @@ const FormMessage = React.forwardRef<
   React.HTMLAttributes<HTMLParagraphElement>
 >(({ className, children, ...props }, ref) => {
   const { error, formMessageId } = useFormField();
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string
   const body = error ? String(error?.message) : children;
 
   if (!body) {
