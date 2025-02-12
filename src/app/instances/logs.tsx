@@ -29,23 +29,23 @@ export default function LogView({ jobId }: { jobId: string }) {
   }, [stdout.data, stderr.data, utils.job.report, jobId]);
 
   return (
-    <Tabs defaultValue="stdout">
+    <Tabs defaultValue="stdout" className="h-full w-full">
       <TabsList>
         <TabsTrigger value="stdout">stdout</TabsTrigger>
         <TabsTrigger value="stderr">stderr</TabsTrigger>
       </TabsList>
       <TabsContent value="stdout" className="lg:h-[500px]">
         <Textarea
-          data-isError={stdout.isError}
-          className="text-md h-full w-full resize-none bg-muted shadow-lg data-[isError=true]:text-red-500"
+          data-iserror={stdout.isError}
+          className="text-md h-full w-full resize-none bg-muted shadow-lg data-[iserror=true]:text-red-500"
           value={stdout.data ?? stdout.error?.message}
           readOnly={true}
         />
       </TabsContent>
       <TabsContent value="stderr" className="lg:h-[500px]">
         <Textarea
-          data-isError={stderr.isError}
-          className="text-md h-full w-full resize-none bg-muted shadow-lg data-[isError=true]:text-red-500"
+          data-iserror={stderr.isError}
+          className="text-md h-full w-full resize-none bg-muted shadow-lg data-[iserror=true]:text-red-500"
           value={stderr.data ?? stderr.error?.message}
           readOnly={true}
         />
