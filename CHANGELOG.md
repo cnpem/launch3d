@@ -1,5 +1,24 @@
 # launch3d
 
+## 0.3.0
+
+### Minor Changes
+
+- 840286c: Update Shadcn components to React19
+- f3af812:
+  - Upgrade to Next 15
+  - React 19
+  - Async dynamic API calls (e.g. `headers` and `cookies`)
+  - Upgrade `next-auth`
+  - Move `next.config` to ts
+  - Eslint 9, move to `esling.config.mjs`
+  - Upgrade to `pnpm@10`
+
+### Patch Changes
+
+- 2a32aa6: fix create ~/.ssh files bug, based on wrong error codes.
+- 8b71b8a: fix typo in CLASS_PATH variable name to match template name.
+
 ## 0.2.6
 
 ### Patch Changes
