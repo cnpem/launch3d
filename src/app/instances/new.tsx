@@ -349,8 +349,8 @@ export default function NewInstanceForm({
                       >
                         <FormControl>
                           <SelectTrigger className="mt-2 w-40">
-                            <SelectValue asChild placeholder="Select partition">
-                              <span>{field.value}</span>
+                            <SelectValue placeholder="Select partition">
+                              <>{field.value}</>
                             </SelectValue>
                           </SelectTrigger>
                         </FormControl>
